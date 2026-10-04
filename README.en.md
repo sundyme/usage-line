@@ -65,7 +65,7 @@ Claude Code does not tell plugins when the cache expires, so usage-line works it
 
 | Option | Default | |
 | --- | --- | --- |
-| `cacheTtl` | `1h` | The base TTL, `1h` or `5m`. Keep `1h` on a subscription; overage is detected automatically. |
+| `cacheTtl` | `1h` | The base TTL, `1h` or `5m`. Keep `1h` on a subscription; overage is detected automatically. Change it with `/plugin configure usage-line@usage-line`. |
 
 ## Requirements and limits
 

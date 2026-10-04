@@ -76,7 +76,7 @@ Claude Code 不直接告诉插件缓存何时过期，usage-line 根据请求本
 | --- | --- | --- |
 | `cacheTtl` | `1h` | 缓存时长基准，`1h` 或 `5m`。订阅保持 `1h`；超额时插件会自动按 5 分钟算，无需改动。 |
 
-安装时会询问，之后可在 `/plugin` 里修改。
+默认即可；修改用 `/plugin configure usage-line@usage-line`。
 
 ## 要求与限制
 
