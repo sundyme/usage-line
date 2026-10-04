@@ -1,4 +1,5 @@
-"""Static, subsetted copies of the film's fonts, holding only the glyphs its source uses.
+"""Static, subsetted copies of the films' fonts, holding only the glyphs their sources use
+(film/*.mjs and trailer/src/*.js). Written to film/fonts and copied to trailer/fonts.
 
     python3 fonts.py <dir with NotoSansSC[wght].ttf, JetBrainsMono[wght].ttf, InstrumentSerif-Italic.ttf>
 """
@@ -10,7 +11,8 @@ from fontTools import subset
 src, out = sys.argv[1], os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
 os.makedirs(out, exist_ok=True)
 used = set(chr(c) for c in range(0x20, 0x7f))
-for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '*.mjs')):
+here = os.path.dirname(os.path.abspath(__file__))
+for f in glob.glob(os.path.join(here, '*.mjs')) + glob.glob(os.path.join(here, '..', 'trailer', 'src', '*.js')):
     used |= set(open(f, encoding='utf-8').read())
 text = ''.join(sorted(c for c in used if c.isprintable() or c == ' '))
 
@@ -36,3 +38,4 @@ for name, axes, dest in FONTS:
     s.subset(font)
     font.save(os.path.join(out, dest))
     print(dest, os.path.getsize(os.path.join(out, dest)) // 1024, 'KB')
+import shutil; shutil.copytree(out, os.path.join(here, '..', 'trailer', 'fonts'), dirs_exist_ok=True)

@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <a href="assets/usage-line.mp4"><img src="assets/film-poster.png" alt="▶ 观看发布影片（44 秒）" width="88%"></a><br>
-  <sub>▶ 点击观看 44 秒发布影片 · 每一帧与每一个音符都由代码生成（见 <a href="film/">film/</a>）</sub>
+  <a href="assets/usage-line-trailer.mp4"><img src="assets/trailer-poster.png" alt="▶ 观看发布预告片（52 秒）" width="88%"></a><br>
+  <sub>▶ 点击观看 52 秒 3D 发布预告片（<a href="trailer/">trailer/</a>） · 另有 44 秒的 <a href="assets/usage-line.mp4">2D 版影片</a>（<a href="film/">film/</a>） · 每一帧与每一个音符都由代码生成</sub>
 </p>
 
 ---
@@ -93,7 +93,8 @@ plugins/usage-line/               插件本体
   hooks/register.tsx              全部逻辑（约 300 行）
   types/index.d.ts                $.state 的类型契约
   tests/usage-line.test.ts        18 个测试
-film/                             发布影片与 banner 的源码
+trailer/                          3D 发布预告片的源码（three.js）
+film/                             2D 发布影片与 banner 的源码
 assets/                           banner、海报、影片
 ```
 
@@ -113,6 +114,12 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/usage-line
 
 ```bash
 cd film && npm install && python3 score.py && node render.mjs
+```
+
+52 秒的 3D 预告片在 [`trailer/`](trailer/)：每个镜头是一个 [three.js](https://threejs.org) 场景，在无头 Chrome 里用 GPU 渲染。转场（光圈、穿越变焦、甩镜、光线擦除、闪白）是一个合成着色器，之后依次经过 bloom、8 个子帧的运动模糊累积，以及高光压缩、暗角、色差和颗粒的调色；原始像素经 WebSocket 送进 ffmpeg，4 个页面并行渲染。[`trailer/score.py`](trailer/score.py) 同样只用 numpy，合成 120 BPM 的电子配乐（抗锯齿超级锯齿波和弦、侧链、贝斯、琶音、两次 drop），每一次切换和界面事件都有落在同一帧上的音效。
+
+```bash
+cd trailer && npm install && python3 score.py && node render.mjs
 ```
 
 ## 许可

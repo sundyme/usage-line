@@ -4,3 +4,5 @@ node_modules/
 .claude-plugin/types/
 # film build output (the finished film is copied to assets/)
 film/out/
+# trailer build output (the finished trailer is copied to assets/)
+trailer/out/

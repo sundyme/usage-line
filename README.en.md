@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> · <a href="assets/usage-line.mp4">▶ Launch film (44 s)</a>
+  <a href="README.md">中文</a> · <a href="assets/usage-line-trailer.mp4">▶ Launch trailer (52 s)</a> · <a href="assets/usage-line.mp4">2D film (44 s)</a>
 </p>
 
 ---
@@ -85,9 +85,11 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/usage-line
 
 Try a change with `claude --plugin-dir plugins/usage-line`.
 
-## The launch film
+## The launch films
 
-No editor, no templates, no footage. [`film/render.mjs`](film/render.mjs) draws all 2,640 frames with Skia, averaging six sub-frames across a 180° shutter for real motion blur, and pipes raw pixels into ffmpeg. [`film/score.py`](film/score.py) synthesises the score and every sound effect with numpy alone, each UI sound on the frame of its event.
+The 52-second 3D trailer lives in [`trailer/`](trailer/). Each shot is a [three.js](https://threejs.org) scene rendered on the GPU in headless Chrome. A compositing shader handles the transitions: iris, zoom-through, whip pan, light-line wipe and flash. Each frame then goes through bloom, an 8-sub-frame motion-blur accumulation and a grade with highlight roll-off, vignette, chromatic aberration and grain. Raw pixels stream over a WebSocket into ffmpeg from four pages in parallel. [`trailer/score.py`](trailer/score.py) synthesises a 120 BPM electronic score with numpy alone, and every cut and UI event gets a sound on its own frame.
+
+The 44-second 2D film is in [`film/`](film/). No editor, no templates, no footage. [`film/render.mjs`](film/render.mjs) draws all 2,640 frames with Skia, averaging six sub-frames across a 180° shutter for real motion blur, and pipes raw pixels into ffmpeg. [`film/score.py`](film/score.py) synthesises the score and every sound effect with numpy alone, each UI sound on the frame of its event.
 
 ## License
 
