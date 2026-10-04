@@ -1,0 +1,19 @@
+{
+  "name": "usage-line",
+  "owner": {
+    "name": "sundyme",
+    "url": "https://github.com/sundyme"
+  },
+  "metadata": {
+    "description": "usage-line for Claude Code: prompt-cache countdown, 5h / 7d usage and context fill in one slim row"
+  },
+  "plugins": [
+    {
+      "name": "usage-line",
+      "source": "./plugins/usage-line",
+      "description": "Prompt-cache countdown, 5h / 7d usage and context fill as rings in one slim row by the prompt",
+      "version": "1.0.0",
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    env:
+      # function hooks are early access; `plugin test` runs them only with this set
+      CLAUDE_CODE_ENABLE_FUNCTION_HOOKS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Validate the marketplace and the plugin
+        run: |
+          claude plugin validate .
+          claude plugin validate plugins/usage-line
+      - name: Test
+        run: claude plugin test plugins/usage-line

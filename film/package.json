@@ -1,0 +1,13 @@
+{
+  "name": "usage-line-film",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "score": "python3 score.py",
+    "render": "node render.mjs",
+    "still": "node render.mjs --still"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80"
+  }
+}

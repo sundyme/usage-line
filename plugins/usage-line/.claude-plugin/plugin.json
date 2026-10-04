@@ -1,0 +1,32 @@
+{
+  "name": "usage-line",
+  "version": "1.0.0",
+  "description": "Prompt-cache countdown, 5h / 7d usage and context fill as rings in one slim row by the prompt",
+  "author": {
+    "name": "sundyme",
+    "url": "https://github.com/sundyme"
+  },
+  "homepage": "https://github.com/sundyme/usage-line",
+  "repository": "https://github.com/sundyme/usage-line",
+  "license": "MIT",
+  "keywords": [
+    "usage",
+    "rate-limit",
+    "prompt-cache",
+    "context",
+    "status"
+  ],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "cacheTtl": {
+      "type": "string",
+      "title": "Prompt cache TTL",
+      "description": "How long the prompt cache lives after each request (Claude Code subscriptions use 1h; extra usage past a spent window drops to 5m on its own)",
+      "default": "1h",
+      "options": [
+        "5m",
+        "1h"
+      ]
+    }
+  }
+}
