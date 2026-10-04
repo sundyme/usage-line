@@ -24,8 +24,8 @@ const shotRT = [hdr(4), hdr(4)]
 const compRT = hdr()
 const accumRT = hdr()
 
-// only what glows (emissive above 1) blooms; white type stays crisp
-const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.55, 0.6, 0.93)
+// only what glows (emissive above 1) blooms; white type and light grounds stay crisp
+const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.55, 0.6, 1.0)
 
 // ── math ─────────────────────────────────────────────────────────────────────────────────────
 export const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
@@ -34,6 +34,7 @@ export const prog = (t, a, b) => clamp((t - a) / (b - a))
 export const E = {
   lin: p => p,
   outCubic: p => 1 - (1 - p) ** 3,
+  inQuad: p => p * p,
   inCubic: p => p ** 3,
   inOutCubic: p => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2),
   outQuart: p => 1 - (1 - p) ** 4,
@@ -184,6 +185,49 @@ const comp = new FullScreenQuad(
           float glow = exp(-pow((x - edge) / .004, 2.)) * 3. + exp(-abs(x - edge) / .05) * .5;
           gl_FragColor = vec4(mix(a, b, m) + tint * glow, 1.); return;
         }
+        if (kind == 7) {
+          // A swells and dissolves into blur; B settles in from blur, slightly small
+          float e = p;
+          vec2 ua = .5 + (uv - .5) / (1. + e * .18);
+          vec2 ub = .5 + (uv - .5) / (.94 + .06 * e);
+          vec3 A = zoomBlur(tA, ua, vec2(.5), e * .28);
+          vec3 B = zoomBlur(tB, ub, vec2(.5), (1. - e) * .2);
+          gl_FragColor = vec4(mix(A, B, smoothstep(.25, .75, e)), 1.); return;
+        }
+        if (kind == 8) {
+          // push: B shoves A off along dir; the seam carries a smear
+          float e = p;
+          float s = sin(e * 3.14159);
+          vec2 d = normalize(dir);
+          float x = dot(uv - .5, d) + .5;
+          vec3 c;
+          if (x > e) c = dirBlur(tA, uv - d * e, d * s * .12);
+          else c = dirBlur(tB, uv + d * (1. - e), d * s * .12);
+          gl_FragColor = vec4(c, 1.); return;
+        }
+        if (kind == 9) {
+          // mosaic: A breaks into ever-larger cells, B resolves out of them
+          float e = p;
+          float cell = mix(1., 140., sin(e * 3.14159));
+          vec2 px = vec2(1920., 1080.);
+          vec2 q = (floor(uv * px / cell) + .5) * cell / px;
+          float h = fract(sin(dot(floor(uv * px / cell), vec2(12.9898, 78.233))) * 43758.5453);
+          float m = step(h, smoothstep(.3, .7, e));
+          vec3 c = mix(texture2D(tA, q).rgb, texture2D(tB, q).rgb, m);
+          gl_FragColor = vec4(c, 1.); return;
+        }
+        if (kind == 10) {
+          // glitch: horizontal slices jump and split their channels; B snaps in at the middle
+          float e = p;
+          float s = sin(e * 3.14159);
+          float band = floor(uv.y * 28. + floor(e * 12.) * 7.);
+          float h = fract(sin(band * 91.7) * 43758.5453);
+          float shift = (h - .5) * .18 * s * step(.45, h);
+          vec2 u2 = vec2(uv.x + shift, uv.y);
+          vec3 A = vec3(texture2D(tA, u2 + vec2(.012 * s, 0.)).r, texture2D(tA, u2).g, texture2D(tA, u2 - vec2(.012 * s, 0.)).b);
+          vec3 B = vec3(texture2D(tB, u2 + vec2(.012 * s, 0.)).r, texture2D(tB, u2).g, texture2D(tB, u2 - vec2(.012 * s, 0.)).b);
+          gl_FragColor = vec4(mix(A, B, step(.5, e + (h - .5) * .3 * s)), 1.); return;
+        }
         if (kind == 6) {
           float f = exp(-pow((p - .5) / .16, 2.));
           vec3 b = texture2D(tB, uv).rgb;
@@ -227,11 +271,14 @@ const finish = new FullScreenQuad(
       fade: { value: 1 },
       seed: { value: 0 },
       aspect: { value: W / H },
+      vig: { value: 0.38 },
+      rollOn: { value: 1 },
+      grain: { value: 0.012 },
     },
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`,
     fragmentShader: /* glsl */ `
       precision highp float;
-      uniform sampler2D t, hud; uniform float ca, exposure, fade, seed, aspect; varying vec2 vUv;
+      uniform sampler2D t, hud; uniform float ca, exposure, fade, seed, aspect, vig, rollOn, grain; varying vec2 vUv;
       vec3 roll(vec3 c){ // keep everything below .8 exact; roll the bloom's highlights off softly
         return mix(c, .8 + .2 * (1. - exp(-(c - .8) * 3.)), step(.8, c));
       }
@@ -246,13 +293,13 @@ const finish = new FullScreenQuad(
         c.g = texture2D(t, vUv).g;
         c.b = texture2D(t, vUv - off).b;
         c *= exposure;
-        c = roll(c);
-        c *= 1. - .38 * smoothstep(.15, 1.1, r2);   // vignette
+        if (rollOn > .5) c = roll(c);
+        c *= 1. - vig * smoothstep(.15, 1.1, r2);   // vignette
         vec3 s = srgb(c);
         vec4 h = texture2D(hud, vUv);
         s = s * (1. - h.a) + h.rgb;                   // HUD, premultiplied
         s *= fade;
-        s += (hash(vUv * 1000.) - .5) * .012;          // a whisper of dither
+        s += (hash(vUv * 1000.) - .5) * grain;          // dither and a little grain
         gl_FragColor = vec4(s, 1.);
       }`,
     depthTest: false,
@@ -268,7 +315,7 @@ export function renderFrame(frame, { samples, shutter = 0.5, plan, drawHud, look
   renderer.clear()
   for (let s = 0; s < samples; s++) {
     const t = Math.max(0, (frame + ((s + 0.5) / samples - 0.5) * shutter) / FPS)
-    const { a, b, kind = 0, p = 0, center = [0.5, 0.5], radius = 0, dir = [1, 0], bloomStrength } = plan(t)
+    const { a, b, kind = 0, p = 0, center = [0.5, 0.5], radius = 0, dir = [1, 0], tint = '#4e8ff7', bloomStrength } = plan(t)
     renderer.setClearColor(0x000000, 1)
     renderer.setRenderTarget(shotRT[0])
     renderer.clear()
@@ -288,11 +335,12 @@ export function renderFrame(frame, { samples, shutter = 0.5, plan, drawHud, look
       u.center.value.set(...center)
       u.radius.value = radius
       u.dir.value.set(...dir)
+      u.tint.value.set(tint)
     }
     renderer.setRenderTarget(compRT)
     comp.render(renderer)
     bloom.strength = bloomStrength ?? 0.55
-    bloom.render(renderer, null, compRT, 0, false)
+    if (bloom.strength > 0) bloom.render(renderer, null, compRT, 0, false)
     accum.material.uniforms.t.value = compRT.texture
     accum.material.uniforms.w.value = 1 / samples
     renderer.setRenderTarget(accumRT)
@@ -307,6 +355,9 @@ export function renderFrame(frame, { samples, shutter = 0.5, plan, drawHud, look
   f.ca.value = L.ca ?? 0.004
   f.exposure.value = L.exposure ?? 1
   f.fade.value = L.fade ?? 1
+  f.vig.value = L.vignette ?? 0.38
+  f.rollOn.value = L.roll === false ? 0 : 1
+  f.grain.value = L.grain ?? 0.012
   f.seed.value = (frame % 97) * 1.37
   renderer.setRenderTarget(null)
   finish.render(renderer)

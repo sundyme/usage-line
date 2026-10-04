@@ -20,6 +20,7 @@ FONTS = [
     ('NotoSansSC[wght].ttf', {'wght': 300}, 'SC-Light.ttf'),
     ('NotoSansSC[wght].ttf', {'wght': 400}, 'SC-Regular.ttf'),
     ('NotoSansSC[wght].ttf', {'wght': 500}, 'SC-Medium.ttf'),
+    ('NotoSansSC[wght].ttf', {'wght': 700}, 'SC-Bold.ttf'),
     ('NotoSansSC[wght].ttf', {'wght': 900}, 'SC-Black.ttf'),
     ('JetBrainsMono[wght].ttf', {'wght': 400}, 'Mono-Regular.ttf'),
     ('JetBrainsMono[wght].ttf', {'wght': 600}, 'Mono-SemiBold.ttf'),

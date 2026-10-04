@@ -1,6 +1,6 @@
 // Boot: fonts first (every texture is drawn with them), then the world, then the socket the
 // frames leave by. render.mjs calls window.renderFrame(n) for each frame.
-const FAMILIES = ['SC Light', 'SC Regular', 'SC Medium', 'SC Black', 'Mono', 'Mono SemiBold', 'Serif Italic']
+const FAMILIES = ['SC Light', 'SC Regular', 'SC Medium', 'SC Bold', 'SC Black', 'Mono', 'Mono SemiBold', 'Serif Italic']
 await Promise.all(FAMILIES.map(f => document.fonts.load(`40px "${f}"`, '缓存0aA')))
 
 const { renderFrame } = await import('./engine.js')

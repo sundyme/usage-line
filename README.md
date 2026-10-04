@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <a href="assets/usage-line-trailer.mp4"><img src="assets/trailer-poster.png" alt="▶ 观看发布预告片（52 秒）" width="88%"></a><br>
-  <sub>▶ 点击观看 52 秒 3D 发布预告片（<a href="trailer/">trailer/</a>） · 另有 44 秒的 <a href="assets/usage-line.mp4">2D 版影片</a>（<a href="film/">film/</a>） · 每一帧与每一个音符都由代码生成</sub>
+  <a href="assets/usage-line-trailer.mp4"><img src="assets/trailer-poster.png" alt="▶ 观看发布预告片（48 秒）" width="88%"></a><br>
+  <sub>▶ 点击观看 48 秒 3D 发布预告片（<a href="trailer/">trailer/</a>） · 另有 44 秒的 <a href="assets/usage-line.mp4">2D 版影片</a>（<a href="film/">film/</a>） · 每一帧与每一个音符都由代码生成</sub>
 </p>
 
 ---
@@ -116,7 +116,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/usage-line
 cd film && npm install && python3 score.py && node render.mjs
 ```
 
-52 秒的 3D 预告片在 [`trailer/`](trailer/)：每个镜头是一个 [three.js](https://threejs.org) 场景，在无头 Chrome 里用 GPU 渲染。转场（光圈、穿越变焦、甩镜、光线擦除、闪白）是一个合成着色器，之后依次经过 bloom、8 个子帧的运动模糊累积，以及高光压缩、暗角、色差和颗粒的调色；原始像素经 WebSocket 送进 ffmpeg，4 个页面并行渲染。[`trailer/score.py`](trailer/score.py) 同样只用 numpy，合成 120 BPM 的电子配乐（抗锯齿超级锯齿波和弦、侧链、贝斯、琶音、两次 drop），每一次切换和界面事件都有落在同一帧上的音效。
+48 秒的 3D 预告片在 [`trailer/`](trailer/)：每个镜头是一个 [three.js](https://threejs.org) 场景，在无头 Chrome 里用 GPU 渲染。大字是逐帧重绘的屏幕层，与 3D 画面一起获得真实的运动模糊；转场（光圈、穿越变焦、推移、马赛克、故障、模糊缩放、闪白）是一个合成着色器，之后依次经过 bloom、8 个子帧的运动模糊累积和调色；原始像素经 WebSocket 送进 ffmpeg，4 个页面并行渲染。[`trailer/score.py`](trailer/score.py) 同样只用 numpy，合成 120 BPM 的电子配乐（抗锯齿超级锯齿波和弦、侧链、贝斯、琶音、两次 drop），每一次切换和界面事件都有落在同一帧上的音效。分镜与文案见 [`trailer/STORYBOARD.md`](trailer/STORYBOARD.md)。
 
 ```bash
 cd trailer && npm install && python3 score.py && node render.mjs

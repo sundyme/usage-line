@@ -19,6 +19,7 @@ export const F = {
   light: s => `${s}px "SC Light"`,
   reg: s => `${s}px "SC Regular"`,
   med: s => `${s}px "SC Medium"`,
+  bold: s => `${s}px "SC Bold"`,
   black: s => `${s}px "SC Black"`,
   mono: s => `${s}px "Mono", "SC Regular"`,
   monoB: s => `${s}px "Mono SemiBold", "SC Medium"`,
