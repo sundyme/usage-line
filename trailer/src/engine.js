@@ -150,7 +150,8 @@ const comp = new FullScreenQuad(
           vec2 d = (uv - center) * vec2(aspect, 1.);
           float r = length(d);
           float m = smoothstep(radius + .004, radius - .004, r);
-          float rim = exp(-pow((r - radius) / .006, 2.)) * smoothstep(0., .02, radius);
+          float rq = (r - radius) / .006;
+          float rim = exp(-rq * rq) * smoothstep(0., .02, radius);
           vec3 b = texture2D(tB, uv).rgb;
           gl_FragColor = vec4(mix(a, b, m) + tint * rim * 2.5, 1.); return;
         }
@@ -162,7 +163,8 @@ const comp = new FullScreenQuad(
           vec2 ub = center + (uv - center) * (1. + eb * .35);
           vec3 B = zoomBlur(tB, ub, center, eb * .35);
           float m = smoothstep(.35, .7, p);
-          vec3 c = mix(A, B, m) + tint * .25 * exp(-pow((p - .5) / .12, 2.));
+          float zq = (p - .5) / .12;
+          vec3 c = mix(A, B, m) + tint * .25 * exp(-zq * zq);
           gl_FragColor = vec4(c, 1.); return;
         }
         if (kind == 4) {
@@ -182,7 +184,8 @@ const comp = new FullScreenQuad(
           float edge = mix(-.08, 1.08, p);
           float m = smoothstep(edge + .003, edge - .003, x);
           vec3 b = texture2D(tB, uv).rgb;
-          float glow = exp(-pow((x - edge) / .004, 2.)) * 3. + exp(-abs(x - edge) / .05) * .5;
+          float gq = (x - edge) / .004;
+          float glow = exp(-gq * gq) * 3. + exp(-abs(x - edge) / .05) * .5;
           gl_FragColor = vec4(mix(a, b, m) + tint * glow, 1.); return;
         }
         if (kind == 7) {
@@ -229,7 +232,8 @@ const comp = new FullScreenQuad(
           gl_FragColor = vec4(mix(A, B, step(.5, e + (h - .5) * .3 * s)), 1.); return;
         }
         if (kind == 6) {
-          float f = exp(-pow((p - .5) / .16, 2.));
+          float fq = (p - .5) / .16;
+          float f = exp(-fq * fq);
           vec3 b = texture2D(tB, uv).rgb;
           gl_FragColor = vec4(mix(a, b, smoothstep(.45, .55, p)) + vec3(f * 1.6), 1.); return;
         }
@@ -320,7 +324,8 @@ export function renderFrame(frame, { samples, shutter = 0.5, plan, drawHud, look
     renderer.setRenderTarget(shotRT[0])
     renderer.clear()
     a.update(t)
-    renderer.render(a.scene, a.camera)
+    if (a.render) a.render(renderer, shotRT[0])
+    else renderer.render(a.scene, a.camera)
     const u = comp.material.uniforms
     u.tA.value = shotRT[0].texture
     u.kind.value = 0
@@ -328,7 +333,8 @@ export function renderFrame(frame, { samples, shutter = 0.5, plan, drawHud, look
       renderer.setRenderTarget(shotRT[1])
       renderer.clear()
       b.update(t)
-      renderer.render(b.scene, b.camera)
+      if (b.render) b.render(renderer, shotRT[1])
+      else renderer.render(b.scene, b.camera)
       u.tB.value = shotRT[1].texture
       u.kind.value = kind
       u.p.value = p

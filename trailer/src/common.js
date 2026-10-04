@@ -35,12 +35,12 @@ export const CHAPTERS = ['cache', 'five', 'seven', 'context']
 
 // ── the nav: the plugin's own row, the chapter you are in lit ────────────────────────────────
 const NAV_SIZE = 25
-export function navItems(i) {
+export function navItems(i, cacheLeft = 3600) {
   return [
-    rowItems({ cacheLeft: 3600 })[0],
-    rowItems({ five: 47 })[1],
-    rowItems({ seven: 63 })[2],
-    rowItems({ ctx: 25 })[3],
+    rowItems({ cacheLeft })[0],
+    rowItems({ five: 9, fiveReset: 248 })[1],
+    rowItems({ seven: 67, sevenReset: 4620 })[2],
+    rowItems({ ctx: 40 })[3],
   ].map((it, k) => ({ ...it, active: k === i }))
 }
 let navCtx = null
@@ -57,10 +57,10 @@ export function navRing(i) {
   const { lay, x0, y } = navLayout()
   return [x0 + lay[i].ringX, y]
 }
-export function drawNav(ctx, active, { alpha = 1, accent = null } = {}) {
+export function drawNav(ctx, active, { alpha = 1, accent = null, cacheLeft = 3600 } = {}) {
   if (alpha <= 0.001) return
   const { lay, x0, y } = navLayout()
-  const items = navItems(active)
+  const items = navItems(active, cacheLeft)
   ctx.save()
   ctx.globalAlpha = alpha
   // the lit pill

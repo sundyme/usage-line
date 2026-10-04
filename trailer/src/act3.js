@@ -40,7 +40,7 @@ export function adapt() {
 
   const widthAt = t => keys(t, [[31.5, 1600], [32.35, 1180, E.inOutCubic], [33.2, 780, E.inOutCubic]])
   const modeOf = w => (w >= 1300 ? 'full' : w >= 950 ? 'short' : 'none')
-  const items = rowItems({ cacheLeft: 3480 })
+  const items = rowItems({ cacheLeft: 3480, five: 9, fiveReset: 248, seven: 67, sevenReset: 4620, ctx: 40 })
   s.update = t => {
     bg.userData.tick(t)
     const w = Math.round(widthAt(t) / 4) * 4
@@ -149,7 +149,7 @@ export function install() {
   const spark = sparks({ count: 140, color: '#a6f5b4', speed: [2, 9], intensity: 3, seed: 31 })
   spark.position.set(-4.6, -1.6, 0)
   s.scene.add(spark)
-  const items = rowItems({ cacheLeft: 3600 })
+  const items = rowItems({ cacheLeft: 3600, five: 9, fiveReset: 248, seven: 67, sevenReset: 4620, ctx: 40 })
   s.update = t => {
     bg.userData.tick(t)
     motes.userData.tick(t, s.camera)

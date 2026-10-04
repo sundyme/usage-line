@@ -4,7 +4,8 @@ const FAMILIES = ['SC Light', 'SC Regular', 'SC Medium', 'SC Bold', 'SC Black', 
 await Promise.all(FAMILIES.map(f => document.fonts.load(`40px "${f}"`, '缓存0aA')))
 
 const { renderFrame } = await import('./engine.js')
-const { buildShots, drawHud, look } = await import('./shots.js')
+const MOD = new URLSearchParams(location.search).get('mod') || 'shots'
+const { buildShots, drawHud, look } = await import(`./${MOD}.js`)
 const { plan } = buildShots()
 
 const ws = new WebSocket(`ws://${location.host}`)

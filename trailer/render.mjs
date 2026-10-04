@@ -61,7 +61,7 @@ async function openPage(browser, port, wss, id) {
   })
   page.on('pageerror', e => console.log(`  page ${id} error:`, e.message))
   const socket = new Promise(r => wss.once('connection', ws => r(ws)))
-  await page.goto(`http://127.0.0.1:${port}/index.html?id=${id}`)
+  await page.goto(`http://127.0.0.1:${port}/index.html?id=${id}&mod=${process.env.MOD || "shots"}`)
   const ws = await socket
   await page.waitForFunction('window.filmReady === true', { timeout: 120000 })
   let waiting = null
