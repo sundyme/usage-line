@@ -175,7 +175,7 @@ const fontPx = font => Number(/(\d+(?:\.\d+)?)px/.exec(font)[1])
 export function kin(ctx, str, x, y, font, t, o = {}) {
   const {
     t0 = 0, t1 = 1e9, style = 'rise', color = FG, accent = null, align = 'center', stagger = 0.032, dur = 0.6,
-    outDur = 0.32, tracking = 0, caret = null, caretColor = '#4e8ff7', alpha = 1, rise = 0.5,
+    outDur = 0.32, tracking = 0, caret = null, caretColor = '#4e8ff7', alpha = 1, rise = 0.5, outRise = 0.42, blurK = 16,
   } = o
   if (t < t0 || alpha <= 0.001) return null
   const size = fontPx(font)
@@ -213,7 +213,7 @@ export function kin(ctx, str, x, y, font, t, o = {}) {
     if (style === 'rise') {
       const q = E.outExpo(p)
       dy = (1 - q) * rise * size
-      blur = (1 - q) * 16
+      blur = (1 - q) * blurK
       a = clamp(p * 2.4)
     } else if (style === 'drop') {
       const q = E.outBack(p)
@@ -232,7 +232,7 @@ export function kin(ctx, str, x, y, font, t, o = {}) {
       a = clamp(local / 0.05)
     }
     if (out > 0) {
-      dy -= E.inCubic(out) * 0.42 * size
+      dy -= E.inCubic(out) * outRise * size
       blur += out * 14
       a *= 1 - E.inQuad(out)
     }

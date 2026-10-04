@@ -14,7 +14,7 @@ import wave
 import numpy as np
 
 SR = 48_000
-DUR = 52.0
+DUR = 48.0
 N = int(SR * DUR)
 BEAT = 0.5
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -315,8 +315,8 @@ def bars(t0, t1, mode, start=0):
                 hat(tb + 0.25, 0.03, pan=0.2)
             continue
         hi = mode == 'hi'
-        cutoff = (lambda t: 5400) if hi else (lambda t: 3600 + 700 * np.sin(t))
-        supersaw(chord, at, d - 0.05, gain=0.07 if hi else 0.058, cutoff=cutoff, res=0.25, a=0.01, r=0.15)
+        cutoff = (lambda t: 4200) if hi else (lambda t: 2600 + 500 * np.sin(t))
+        supersaw(chord, at, d - 0.05, gain=0.055 if hi else 0.042, cutoff=cutoff, res=0.25, a=0.01, r=0.15)
         supersaw([chord[0] + 12, chord[2] + 12], at, d - 0.05, gain=0.024, cutoff=lambda t: 6500, voices=5, spread=0.15, r=0.15, bus_name='lead')
         for e8 in range(int(d * 4)):
             bass_note(root + (12 if e8 % 2 else 0), at + e8 * 0.25, 0.24, 0.2)
@@ -333,164 +333,142 @@ def bars(t0, t1, mode, start=0):
             pluck(chord[pattern[i % 8]] + 12, at + i * 0.125, 0.045 + 0.02 * (i % 4 == 0), pan=-0.5 + (i % 8) / 7)
 
 
-# 0–7 · OPEN: the room, the glass popover opening and closing, the slot that is not there
-supersaw(F_M, 0.0, 6.9, gain=0.034, cutoff=lambda t: 450 + 900 * t / 6.9, a=1.4, r=0.6, verb=0.75)
-bass_note(30, 0.0, 6.9, 0.07)
-for i in range(26):
-    hat(1.0 + i * 0.25, 0.008 + 0.018 * (i / 26), pan=-0.3 if i % 2 else 0.3)
-for at in (1.05, 3.0, 3.85, 5.35):
-    click(at - 0.02, 0.2, 0.3)
-    glass_pop(at)
-for at in (2.55, 3.4, 4.2):
-    click(at, 0.17, 0.3)
-    glass_close(at + 0.03)
-for k, at in enumerate((4.55, 4.8)):            # 每一次查看，都是一次打断。
-    kick(at, 0.5 + 0.2 * k)
-impact(4.8, 0.22, 1.2)
-for i in range(4):                               # the popover rows light up, one by one
-    tick(5.85 + i * 0.16, 0.05, 2600 + 300 * i, 0.3)
-bell(midi(57), 6.5, 0.12, 1.6, 1.41, 2.6, 0.3, verb=0.6)   # the missing slot: a sour, hollow note
-bell(midi(63), 6.52, 0.06, 1.4, 1.41, 2.2, 0.3, verb=0.6)
-riser(5.7, 1.3, 0.12, 200, 6000)
-whoosh(6.85, 0.6, 400, 7000, 0.24, 0.7)
+# 0–10 · GLANCE: a quiet room; the clicks are the rhythm
+supersaw(F_M, 0.0, 9.9, gain=0.026, cutoff=lambda t: 420 + 700 * t / 9.9, a=1.6, r=0.6, verb=0.8)
+bass_note(30, 0.0, 9.9, 0.05)
+typing(0.55, 7, 0.075, 0.07)
+bell(midi(81), 1.5, 0.04, 1.4, 2.0, 0.5, verb=0.7)
+whoosh(2.2, 1.0, 300, 2400, 0.1, 0.5, pan=0.4)             # the window arrives
+for i in range(25):
+    hat(3.7 + i * 0.25, 0.006 + 0.012 * (i / 25), pan=-0.3 if i % 2 else 0.3)
+for k, at in enumerate((3.7, 5.1, 6.6)):                    # open
+    click(at - 0.01, 0.16, 0.35)
+    bell(midi([76, 79, 83][k]), at + 0.03, 0.05, 0.9, 2.0, 0.6, 0.35, verb=0.5)
+    pluck([57, 61, 64][k], at, 0.05, 0.3, d=0.5, bright=2400)
+for at in (4.6, 5.8):                                        # close
+    click(at - 0.01, 0.13, 0.35)
+    pluck(52, at, 0.035, 0.3, d=0.3, bright=1600)
+for k, at in enumerate((4.0, 5.0, 6.0, 7.0, 8.0, 9.0)):     # a soft pulse finds its feet
+    kick(at, 0.32 + 0.04 * k)
+for i in range(4):                                           # the rows, hovered
+    tick(7.55 + i * 0.24, 0.035, 2400 + 260 * i, 0.3)
+glass_pop(8.6, 1.4, -0.2)                                    # the note
+bell(midi(69), 8.75, 0.06, 1.8, 1.41, 1.6, -0.2, verb=0.7)
+whoosh(9.75, 0.6, 400, 6000, 0.16, 0.7)
+# 10–16 · WHY: a tenth, then all of it
+supersaw(D_M, 10.0, 2.9, gain=0.03, cutoff=lambda t: 900, a=0.3, r=0.4, verb=0.7)
+supersaw(A_M, 12.9, 1.5, gain=0.03, cutoff=lambda t: 700, a=0.1, r=0.4, verb=0.7)
+impact(10.3, 0.22, 1.4)
+bell(midi(81), 10.32, 0.08, 1.8, 2.0, 0.6, verb=0.7)
+for i in range(5):                                           # the bar fills
+    pluck(69 + [0, 4, 7, 12, 16][i], 10.38 + i * 0.1, 0.045, -0.3 + 0.15 * i, bus_name='ui')
+for k, x in enumerate(11.4 + 1.45 * (1 - (1 - np.linspace(0, 1, 16)) ** 1.5)):
+    tick(x, 0.025 + 0.02 * k / 16, 1900 + 50 * k, 0.2 if k % 2 else -0.2)
+bell(midi(45), 12.9, 0.12, 2.0, 1.41, 2.2, verb=0.7)
+impact(12.9, 0.3, 1.6)
+for k in range(4):
+    kick(12.9 + k * 0.5, 0.3)
+bell(midi(73), 14.45, 0.05, 1.4, 1.0, 0.4, verb=0.8)
+typing(15.42, 9, 0.04, 0.07)
+riser(14.9, 1.1, 0.16, 200, 8000)
+for k in range(12):
+    snare(15.0 + 1.0 * (1 - (1 - k / 12) ** 1.5), 0.03 + 0.08 * k / 12)
+reverse_cymbal(16.0, 1.0, 0.2)
 
-# 7–14 · WHY: hits cost a tenth, leaving costs it all
-bars(7.0, 12.4, 'soft')
-impact(7.0, 0.35, 1.4)
-for i in range(6):                               # the two glass bars fill
-    pluck(69 + [0, 4, 7, 12, 16, 19][i], 8.0 + i * 0.09, 0.07, -0.4, bus_name='ui')
-for i in range(3):
-    pluck(57 + [0, 3, 7][i], 8.15 + i * 0.25, 0.08, 0.4, d=0.6, bright=1600, bus_name='ui')
-ts = np.arange(9.6, 10.6, 1 / 600)               # the clock time-lapse: ticks thicken, then expiry
-for k, x in enumerate(9.6 + 1.0 * (1 - (1 - np.linspace(0, 1, 18)) ** 1.6)):
-    tick(x, 0.04 + 0.03 * k / 18, 1900 + 60 * k, 0.2 if k % 2 else -0.2)
-impact(10.55, 0.5, 1.6)
-glitch(10.56, 0.3, 0.1)
-bell(midi(45), 10.55, 0.15, 1.6, 1.41, 2.4, verb=0.6)
-for i in range(16):                              # 398,800 tokens, counting up
-    tick(11.15 + i * 0.045, 0.03, 3400 + 40 * i, 0.15)
-typing(12.45, 12, 0.075, 0.08)                   # 如果，你知道它还剩多久？
-supersaw(D_M, 12.4, 1.6, gain=0.04, cutoff=lambda t: 500 + 6000 * ((t - 12.4) / 1.6) ** 2.4, res=0.8, a=0.05, r=0.02, verb=0.3)
-riser(12.4, 1.6, 0.22, 200, 9000)
-for k in range(14):
-    snare(13.0 + 1.0 * (1 - (1 - k / 14) ** 1.5), 0.04 + 0.1 * k / 14)
-reverse_cymbal(14.0, 1.0, 0.26)
-
-# 14 · DROP — the capsule, the row, usage-line; the cache stops the music when it expires
-bars(14.0, 26.7, 'full')
-bars(27.95, 28.95, 'full', start=3)
-impact(14.0, 0.8, 2.6)
-whoosh(13.95, 0.9, 6000, 300, 0.2, 0.15)
-for i in range(4):                               # four rings land in the capsule
-    at = 14.45 + 0.2 * i
-    whoosh(at - 0.35, 0.4, 500, 7000, 0.1, 0.9, pan=-0.5 + i / 3)
-    bell(midi(73 + [0, 4, 7, 12][i]), at, 0.12, 1.4, 2.0, 1.0, -0.4 + 0.27 * i)
-typing(15.25, 10, 0.05, 0.08)                    # usage-line
-tick(15.6, 0.1, 2600)
-whoosh(16.75, 1.0, 300, 4000, 0.16, 0.55)        # the window gathers round the row
-for i, at in enumerate((17.4, 17.52, 17.64)):
-    tick(at, 0.07, 3200 + 400 * i)
-riser(18.35, 0.65, 0.14, 400, 9000)              # zoom-through into the cache
-whoosh(18.75, 0.6, 500, 9000, 0.28, 0.75)
-impact(19.25, 0.3, 1.2)
-# the cache: live seconds, a time-lapse, a message that refills it, the last minute, expiry, refill
-for at in np.arange(19.6, 21.8, 1.0):
-    tick(at, 0.14, 2600)
-ts = np.arange(21.8, 22.9, 1 / 600)
-p = np.clip((ts - 21.8) / 1.1, 0, 1)
-left = 3597.5 + (760 - 3597.5) * np.where(p < 0.5, 4 * p ** 3, 1 - (-2 * p + 2) ** 3 / 2)
+# 16 · DROP — the drop of glass; the groove carries the reveal and the cache
+bars(16.0, 28.0, 'full')
+bars(29.15, 29.9, 'soft', start=3)
+bars(30.0, 35.0, 'full', start=1)
+impact(16.0, 0.7, 2.4)
+bell(midi(85), 16.02, 0.12, 2.2, 2.0, 1.0, verb=0.8)
+whoosh(16.25, 0.7, 400, 7000, 0.12, 0.6)                    # the stretch
+for i in range(4):                                           # four rings land
+    bell(midi(73 + [0, 4, 7, 12][i]), 16.6 + 0.13 * i, 0.09, 1.4, 2.0, 1.0, -0.4 + 0.27 * i)
+bell(midi(78), 16.95, 0.05, 1.6, 1.0, 0.4, verb=0.7)
+whoosh(18.35, 1.1, 250, 3000, 0.14, 0.6)                     # the window rises to meet it
+bell(midi(90), 19.6, 0.05, 1.6, 3.01, 0.8, verb=0.8)        # glass becomes the real thing
+riser(20.9, 1.3, 0.12, 300, 8000)
+whoosh(21.85, 0.55, 500, 9000, 0.2, 0.75)
+# the cache
+glass_pop(22.15, 1.2, 0.3)
+for at in np.arange(22.6, 23.6, 1.0):
+    tick(at, 0.08, 2600, 0.3)
+ts = np.arange(23.6, 24.4, 1 / 600)
+p = np.clip((ts - 23.6) / 0.8, 0, 1)
+left = 3598.6 + (720 - 3598.6) * np.where(p < 0.5, 4 * p ** 3, 1 - (-2 * p + 2) ** 3 / 2)
 for k, i in enumerate(np.nonzero(np.diff(np.floor(left / 120)))[0]):
-    tick(ts[i + 1], 0.05, 2000 + 900 * (k % 2), 0.2 if k % 2 else -0.2)
-riser(21.8, 1.1, 0.06, 300, 4000)
-for r in (23.62, 27.95):                         # the message bubble flies in; the ring refills
-    whoosh(r - 0.6, 0.62, 300, 6000, 0.2, 0.8, pan=-0.3)
-    impact(r, 0.45, 1.6)
-    for i, n in enumerate((78, 81, 85, 90, 93)):
-        bell(midi(n), r + i * 0.05, 0.08, 1.5, 2.0, 0.8, -0.4 + 0.2 * i)
-ts = np.arange(25.0, 25.8, 1 / 600)
-p = np.clip((ts - 25.0) / 0.8, 0, 1)
-left = 3599 + (59 - 3599) * np.where(p < 0.5, 4 * p ** 3, 1 - (-2 * p + 2) ** 3 / 2)
+    tick(ts[i + 1], 0.04, 2000 + 900 * (k % 2), 0.3 if k % 2 else 0.1)
+for m in (25.6, 29.15):                                      # a message, swallowed by the lens
+    whoosh(m - 0.62, 0.66, 300, 5000, 0.16, 0.85, pan=-0.4)
+    impact(m, 0.3, 1.4)
+    for i, n in enumerate((78, 81, 85, 90)):
+        bell(midi(n), m + i * 0.05, 0.06, 1.5, 2.0, 0.8, 0.3 - 0.1 * i)
+ts = np.arange(26.5, 27.1, 1 / 600)
+p = np.clip((ts - 26.5) / 0.6, 0, 1)
+left = 3599.6 + (59 - 3599.6) * np.where(p < 0.5, 4 * p ** 3, 1 - (-2 * p + 2) ** 3 / 2)
 for k, i in enumerate(np.nonzero(np.diff(np.floor(left / 240)))[0]):
-    tick(ts[i + 1], 0.05, 2000 + 900 * (k % 2), 0.2 if k % 2 else -0.2)
-ts = np.arange(25.8, 26.7, 1 / 1200)             # the last minute, in seconds, tightening
-secs = np.ceil(59 * (1 - ((ts - 25.8) / 0.9) ** 1.25))
+    tick(ts[i + 1], 0.04, 2000 + 900 * (k % 2), 0.3 if k % 2 else 0.1)
+ts = np.arange(27.1, 28.0, 1 / 1200)                         # the last minute, tightening
+secs = np.ceil(59 * (1 - ((ts - 27.1) / 0.9) ** 1.3))
 for k, i in enumerate(np.nonzero(np.diff(secs))[0]):
     if k % 2 == 0:
-        tick(ts[i + 1], 0.05 + 0.06 * k / 59, 1700 + 25 * k)
-riser(25.9, 0.8, 0.14, 300, 7000)
-impact(26.7, 0.6, 1.4)                           # expired: the music stops
-glitch(26.72, 0.6, 0.2)
-bell(midi(45), 26.7, 0.15, 1.3, 1.41, 2.4, verb=0.6)
-supersaw(F_M, 26.7, 1.2, gain=0.03, cutoff=lambda t: 600, a=0.3, r=0.4, verb=0.8)
-reverse_cymbal(27.95, 0.8, 0.24)
-# 29 · LIMITS: the iris from the 5h ring; thresholds; the week; the context and /clear
-whoosh(28.85, 0.55, 300, 5000, 0.22, 0.7, pan=0.3)
-bars(29.0, 37.0, 'full', start=0)
+        tick(ts[i + 1], 0.04 + 0.05 * k / 59, 1700 + 25 * k, 0.3)
+riser(27.2, 0.8, 0.1, 300, 6000)
+impact(28.0, 0.45, 1.6)                                      # expired: the music stops
+bell(midi(45), 28.0, 0.12, 1.4, 1.41, 2.4, verb=0.7)
+supersaw(F_M, 28.0, 1.15, gain=0.025, cutoff=lambda t: 600, a=0.3, r=0.4, verb=0.8)
+# 30 · LIMITS
+whoosh(29.85, 0.55, 400, 7000, 0.2, 0.75)
 for i in range(3):
-    whoosh(29.05 + i * 0.12, 0.4, 600, 4000, 0.06, 0.7, pan=-0.5 + 0.5 * i)
-    tick(29.55 + i * 0.12, 0.06, 3000 + 300 * i)
-bell(midi(80), 31.0, 0.14, 1.3, 1.0, 0.4)        # 70% amber
-impact(31.0, 0.25, 1.0)
-impact(31.7, 0.45, 1.3)                          # 90% red
-bell(midi(78), 31.7, 0.16, 1.6, 1.41, 1.8)
-whoosh(31.95, 0.5, 400, 3000, 0.1, 0.6)
-for i in range(5):                               # the week fills
-    pluck(73 + [0, 2, 4, 7, 9][i], 32.1 + i * 0.18, 0.08, -0.5 + 0.25 * i, bus_name='ui')
-whoosh(33.75, 0.5, 400, 3000, 0.1, 0.6)
-riser(33.9, 1.0, 0.07, 400, 4000)                # the context climbs
-typing(35.05, 6, 0.07, 0.1)                      # /clear
-click(35.55, 0.2)
-impact(35.6, 0.5, 1.3)
-whoosh(35.6, 0.9, 4000, 200, 0.24, 0.12)
-glitch(35.62, 0.35, 0.12)
-whoosh(36.6, 0.5, 300, 4000, 0.12, 0.6)
-# 37 · ADAPT: push into the light; the window narrows; the flip
-whoosh(36.9, 0.5, 6000, 1500, 0.16, 0.3)
-bars(37.0, 41.0, 'light', start=2)
-for at in (37.5, 38.35):
-    whoosh(at, 0.8, 1800, 500, 0.09, 0.5)
-    tick(at + 0.8, 0.07, 2400)
-whoosh(39.7, 0.8, 200, 4000, 0.22, 0.55)
-impact(40.4, 0.25, 1.0)
-# 41 · INSTALL
-whoosh(40.9, 0.5, 300, 6000, 0.2, 0.7)
-bars(41.0, 44.5, 'full', start=0)
-typing(41.45, 43, 0.021, 0.06)
-click(42.4, 0.2)
-bell(midi(81), 42.5, 0.08, 1.0, 2.0, 0.5)
-typing(42.7, 27, 0.024, 0.06)
-click(43.45, 0.22)
-impact(43.5, 0.35, 1.2)
-for i, n in enumerate((78, 85, 90)):
-    bell(midi(n), 43.5 + i * 0.06, 0.11, 1.5, 2.0, 0.6, -0.2 + 0.2 * i)
+    glass_pop(30.05 + i * 0.12, 0.8, -0.4 + 0.4 * i)
+bell(midi(80), 31.3, 0.1, 1.3, 1.0, 0.4)                     # 70% amber
+bell(midi(78), 31.75, 0.12, 1.6, 1.41, 1.8)                  # 90% red
+impact(31.75, 0.25, 1.0)
+whoosh(32.0, 0.5, 400, 3000, 0.08, 0.6)
+for i in range(5):
+    pluck(73 + [0, 2, 4, 7, 9][i], 32.3 + i * 0.16, 0.06, -0.5 + 0.25 * i, bus_name='ui')
+whoosh(33.55, 0.5, 400, 3000, 0.08, 0.6)
+riser(33.75, 0.6, 0.06, 400, 4000)
+typing(34.4, 6, 0.065, 0.09)
+impact(34.85, 0.4, 1.3)
+whoosh(34.85, 0.8, 4000, 200, 0.18, 0.12)
+# 35 · ADAPT · 38 · INSTALL
+whoosh(34.9, 0.5, 6000, 1500, 0.14, 0.3)
+bars(35.0, 38.0, 'light', start=2)
+for at in (35.45, 36.5):
+    whoosh(at, 0.7, 1800, 500, 0.07, 0.5)
+    tick(at + 0.65, 0.05, 2400)
+whoosh(37.1, 0.8, 300, 4000, 0.14, 0.55)
+bars(38.0, 40.0, 'soft', start=0)
+typing(38.3, 43, 0.019, 0.055)
+click(39.25, 0.18)
+bell(midi(81), 39.3, 0.06, 1.0, 2.0, 0.5)
+typing(39.45, 26, 0.022, 0.055)
+click(40.05, 0.2)
+bell(midi(85), 40.1, 0.07, 1.0, 2.0, 0.5)
 for i in range(4):
-    tick(43.8 + i * 0.12, 0.06, 2800 + 250 * i)
-# 44.5 · PAYOFF: the breakdown under the line, and the run into the last drop
-glitch(44.5, 0.4, 0.16)
-supersaw(F_M, 44.5, 2.0, gain=0.05, cutoff=lambda t: 700 + 5000 * ((t - 44.5) / 2) ** 2.2, res=0.9, a=0.1, r=0.05, verb=0.6)
-bass_note(42, 44.5, 1.9, 0.18)
-impact(44.6, 0.3, 1.4)
-bell(midi(73), 44.6, 0.09, 1.6, 1.0, 0.5, verb=0.7)
-bell(midi(78), 45.2, 0.11, 1.6, 1.0, 0.5, verb=0.7)
-riser(44.7, 1.8, 0.24, 200, 10000)
-for k in range(20):
-    snare(45.1 + 1.4 * (1 - (1 - k / 20) ** 1.7), 0.05 + 0.12 * k / 20)
-reverse_cymbal(46.5, 1.2, 0.3)
-# 46.5 · the last drop: the ring closes, the name types, the link clicks
-bars(46.5, 50.5, 'hi', start=0)
-impact(46.5, 0.85, 3.0)
-whoosh(46.65, 0.8, 400, 6000, 0.12, 0.85)
-bell(midi(78), 47.45, 0.15, 2.4, 1.0, 0.6, verb=0.8)
-bell(midi(85), 47.47, 0.08, 2.4, 1.0, 0.4, 0.3, verb=0.8)
-typing(47.5, 10, 0.05, 0.08)
-bell(midi(90), 48.55, 0.06, 1.0, 2.0, 0.4)
-click(49.72, 0.22)
-bell(midi(85), 49.75, 0.08, 1.4, 1.0, 0.4)
-# the last chord rings out
-supersaw(F_M + [66, 73], 50.5, 1.2, gain=0.075, cutoff=lambda t: 4200 - 2600 * min(1, (t - 50.5) / 1.5), a=0.01, r=0.3, verb=0.8)
-bass_note(42, 50.5, 1.3, 0.24)
-kick(50.5, 1.0)
-impact(50.5, 0.4, 1.4)
+    bell(midi(73 + [0, 4, 7, 12][i]), 40.3 + 0.08 * i, 0.06, 1.2, 2.0, 0.8, -0.3 + 0.2 * i)
+supersaw(F_M, 40.0, 1.0, gain=0.04, cutoff=lambda t: 700 + 5000 * ((t - 40) / 1.0) ** 2.2, res=0.8, a=0.05, r=0.02, verb=0.5)
+riser(40.1, 0.9, 0.2, 200, 10000)
+for k in range(12):
+    snare(40.3 + 0.7 * (1 - (1 - k / 12) ** 1.6), 0.04 + 0.1 * k / 12)
+reverse_cymbal(41.0, 1.0, 0.26)
+# 41 · DROP — everything, on glass
+bars(41.0, 44.3, 'hi', start=0)
+impact(41.0, 0.8, 2.8)
+for i, (n, pan) in enumerate(zip((73, 76, 80, 85, 88, 92, 97, 100), (-0.6, 0.6, -0.3, 0.3, -0.5, 0.5, 0, 0.2))):
+    bell(midi(n), 41.0 + i * 0.125, 0.05, 1.2, 2.0, 0.8, pan, verb=0.6)
+whoosh(44.0, 0.6, 600, 8000, 0.14, 0.7)
+# 44.3 · THE NAME
+supersaw(F_M + [66, 73], 44.3, 3.4, gain=0.05, cutoff=lambda t: 3000 - 2000 * min(1, (t - 44.3) / 3), a=0.02, r=0.4, verb=0.85)
+bass_note(42, 44.3, 3.0, 0.16)
+kick(44.3, 0.8)
+impact(44.3, 0.35, 2.0)
+bell(midi(78), 44.55, 0.09, 2.4, 1.0, 0.6, verb=0.85)
+bell(midi(85), 44.58, 0.05, 2.4, 1.0, 0.4, 0.3, verb=0.85)
+glass_pop(45.25, 1.2, 0.0)
+click(46.35, 0.2)
+bell(midi(90), 46.38, 0.07, 1.6, 2.0, 0.5, verb=0.8)
 
 # sidechain: everything tonal breathes with the kick
 duck = np.ones(N)
@@ -519,7 +497,7 @@ mix = sum(bus[k] * LEVEL[k] for k in bus) + wet
 mix = highpass(mix, 30, 3)
 mix = np.tanh(mix * 1.3) / 1.3
 fade = np.ones(N)
-i0 = int(50.9 * SR)
+i0 = int(47.0 * SR)
 fade[i0:] = np.linspace(1, 0, N - i0) ** 1.4
 mix *= fade
 mix *= 0.95 / np.max(np.abs(mix))

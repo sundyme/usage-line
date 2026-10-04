@@ -12,11 +12,11 @@ export const GLASS = 1
 export const FRONT = 2
 
 const rt = (w, h) => new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, depthBuffer: false, colorSpace: THREE.LinearSRGBColorSpace })
-const backRT = rt(W, H)
+export const backRT = rt(W, H)
 const halfA = rt(W / 2, H / 2)
-const halfB = rt(W / 2, H / 2)
+export const halfB = rt(W / 2, H / 2)
 const quarterA = rt(W / 4, H / 4)
-const quarterB = rt(W / 4, H / 4)
+export const quarterB = rt(W / 4, H / 4)
 
 const blurPass = new FullScreenQuad(
   new THREE.ShaderMaterial({
@@ -60,9 +60,11 @@ export function glassRender(shot) {
     renderer.clear()
     renderer.render(shot.scene, cam)
     // two strengths of frost: half-res and quarter-res gaussians
-    blur(renderer, backRT, halfA, halfB, 2.4)
-    blur(renderer, halfB, quarterA, quarterB, 3.2)
-    blur(renderer, quarterB, quarterA, quarterB, 4.4)
+    blur(renderer, backRT, halfA, halfB, 1.2)
+    blur(renderer, halfB, halfA, halfB, 1.6)
+    blur(renderer, halfB, quarterA, quarterB, 1.6)
+    blur(renderer, quarterB, quarterA, quarterB, 2.2)
+    blur(renderer, quarterB, quarterA, quarterB, 3.0)
     renderer.setRenderTarget(target)
     renderer.render(shot.scene, cam)
     cam.layers.set(GLASS)
