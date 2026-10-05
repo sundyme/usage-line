@@ -61,7 +61,7 @@ async function openPage(browser, port, wss, id) {
   })
   page.on('pageerror', e => console.log(`  page ${id} error:`, e.message))
   const socket = new Promise(r => wss.once('connection', ws => r(ws)))
-  await page.goto(`http://127.0.0.1:${port}/index.html?id=${id}&mod=${process.env.MOD || "shots"}`)
+  await page.goto(`http://127.0.0.1:${port}/index.html?id=${id}&mod=${process.env.MOD || "shots"}&look=${process.env.LOOK || ""}&tr=${process.env.TR || ""}`)
   const ws = await socket
   await page.waitForFunction('window.filmReady === true', { timeout: 120000 })
   let waiting = null
@@ -100,7 +100,8 @@ async function stills(times) {
 
 async function film() {
   const DUR = Number(process.env.DUR) || (await import('./src/timeline.js')).DUR
-  const total = Math.round(DUR * FPS)
+  const START = Math.round((Number(process.env.START) || 0) * FPS) // a clip: frames START..DUR
+  const total = Math.round(DUR * FPS) - START
   const jobs = Number(process.env.JOBS || 4)
   const { server, wss, port } = await serve()
   const browser = await launch()
@@ -113,8 +114,8 @@ async function film() {
   fs.mkdirSync(OUT, { recursive: true })
   await Promise.all(
     pages.map(async (p, i) => {
-      const a = i * size
-      const b = Math.min(total, a + size)
+      const a = START + i * size
+      const b = Math.min(START + total, a + size)
       const file = path.join(OUT, `chunk-${String(i).padStart(2, '0')}.mkv`)
       files[i] = file
       const ff = ffmpeg(['-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${W}x${H}`, '-r', String(FPS), '-i', '-', '-vf', 'vflip', '-c:v', 'libx264rgb', '-qp', '0', '-preset', 'ultrafast', file])
@@ -139,7 +140,7 @@ async function film() {
   const final = path.join(OUT, `${process.env.NAME || 'usage-line-trailer'}.mp4`)
   const enc = ffmpeg([
     '-f', 'concat', '-safe', '0', '-i', path.join(OUT, 'chunks.txt'),
-    ...(fs.existsSync(audio) ? ['-i', audio] : []),
+    ...(fs.existsSync(audio) ? ['-ss', String(START / FPS), '-i', audio] : []),
     '-vf', 'noise=c0s=4:c0f=t+u,format=yuv420p',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-tune', 'film', '-x264-params', 'aq-mode=3',
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709',

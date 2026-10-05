@@ -182,7 +182,7 @@ export function roundRect(ctx, x, y, w, h, r) {
 
 // The plugin's ring: grey track, arc from twelve o'clock; an empty ring that has a colour
 // wears it on its track.
-export function ring(ctx, cx, cy, r, w, frac, color, { alpha = 1, glow = 0, minArc = 0.04 } = {}) {
+export function ring(ctx, cx, cy, r, w, frac, color, { alpha = 1, glow = 0, minArc = 0.04, track = 0.35 } = {}) {
   if (alpha <= 0.001) return
   const p = clamp(frac)
   ctx.save()
@@ -191,7 +191,7 @@ export function ring(ctx, cx, cy, r, w, frac, color, { alpha = 1, glow = 0, minA
   ctx.lineCap = 'round'
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, TAU)
-  ctx.strokeStyle = p === 0 && color !== GREY ? rgba(color, 0.6) : rgba(GREY, 0.35)
+  ctx.strokeStyle = p === 0 && color !== GREY ? rgba(color, 0.6) : rgba(GREY, track)
   ctx.stroke()
   if (p > 0) {
     const a = Math.min(0.99995, Math.max(p, minArc))

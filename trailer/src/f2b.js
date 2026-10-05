@@ -3,7 +3,7 @@
 import * as THREE from 'three'
 import { E, clamp, keys, lerp, prog, tw } from './engine.js'
 import { AMBER, BLUE, DIM, F, FG, RED, TAU, clockText, glowSpot, measure, mix, reveal, rgba, ring, ringColor, span, text } from './ui.js'
-import { D, STUDIO, at, orbit, panel, rr, snap, world } from './f2kit.js'
+import { D, STUDIO, at, orbit, panel, rr, snap, world, GRID, LOOK } from './f2kit.js'
 import { SUB, ripple } from './f2a.js'
 
 // ═══ 04 · the cache ═════════════════════════════════════════════════════════════════════════
@@ -150,8 +150,8 @@ export function cache() {
   s.update = t => {
     const st = cacheState(t)
     const shownSt = cacheState(snap(t))
-    const tint = st.expired ? '#3a1210' : st.amber ? '#3a2609' : '#10203f'
-    bg.userData.set([STUDIO[0], { c: tint, x: 0.3, y: 0.45, r: 0.55, a: 1 }, STUDIO[2]])
+    const tint = st.expired ? LOOK.tint.red : st.amber ? LOOK.tint.amber : LOOK.tint.blue
+    bg.userData.set([...STUDIO, { c: tint, x: 0.3, y: 0.45, r: 0.55, a: 1 }])
     bg.userData.tick(t)
     put(ticks, C.x, C.y, ZT)
     ticks.rotation.z = -0.5 * (1 - tw(t, 15.85, 17.0, E.outExpo))
@@ -174,7 +174,7 @@ export function cache() {
       dist: keys(t, [[15.85, 0.8], [17.2, 1.07, E.outCubic], [24.3, 1.02, E.inOutSine]]) - lean,
       shake,
     })
-    grid.material.opacity = 0.07
+    grid.material.opacity = GRID
     front.draw(() => false)
   }
   return s
@@ -295,7 +295,7 @@ export function meters() {
       [32.9, [CTX.x, CTX.y + 60, 0.8, 0.02], E.inOutSine],
     ])
     orbit(s.camera, t, wpos(path[0], path[1]), { dist: path[2], yaw: path[3], pitch: 0.04 })
-    grid.material.opacity = 0.07
+    grid.material.opacity = GRID
     front.draw(ctx => {
       const a1 = 1 - tw(t, 29.3, 29.8, E.inCubic)
       if (a1 > 0) {

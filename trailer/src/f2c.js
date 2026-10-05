@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { E, W, H, clamp, keys, lerp, prog, tw } from './engine.js'
 import { toPx } from './kit.js'
 import { BLUE, DIM, F, FAINT, FG, SURFACE, SURFACE2, TAU, check, drawRow, glowSpot, measure, pie, reveal, rgba, rowItems, text, typed } from './ui.js'
-import { at, orbit, panel, rr, snap, world } from './f2kit.js'
+import { at, orbit, panel, rr, snap, world, GRID, edge } from './f2kit.js'
 import { LOCK, SUB, lockup } from './f2a.js'
 
 // ❯ and ⏺, which no font here carries
@@ -46,6 +46,7 @@ function drawDesktop(ctx, t, items) {
   ctx.strokeStyle = rgba(FG, 0.1)
   ctx.lineWidth = 1.5
   ctx.stroke()
+  edge(ctx, px, py, w, 300, 26)
   ctx.save()
   rr(ctx, px, py, w, 300, 26)
   ctx.clip()
@@ -96,6 +97,7 @@ function drawTerminal(ctx, t, items) {
   ctx.strokeStyle = rgba(FG, 0.14)
   ctx.lineWidth = 1.5
   ctx.stroke()
+  edge(ctx, tx, ty, tw2, BH, 18)
   ctx.save()
   rr(ctx, tx, ty, tw2, BH, 18)
   ctx.clip()
@@ -216,7 +218,7 @@ export function adapt() {
     const lp = v3.set(((checkAt[0] - TW / 2) / 100) * -1, (TH / 2 - checkAt[1]) / 100 - 0.3, 0).applyMatrix4(A.matrixWorld).toArray()
     const [cx, cy] = toPx(s.camera, lp)
     s.userData.check = [cx / W, 1 - cy / H]
-    grid.material.opacity = 0.07
+    grid.material.opacity = GRID
     front.draw(ctx => {
       const head = (zh, en, a, b, t1) => {
         if (t < a || t > t1 + 0.4) return
@@ -254,7 +256,7 @@ export function end() {
       text(ctx, 'github.com/sundyme/usage-line', 960, y + 248, F.mono(28), DIM, { align: 'center', alpha: tw(t, 42.0, 42.6) })
     })
     orbit(s.camera, t, at(960, 520), { dist: keys(t, [[41.15, 0.78], [42.8, 1.0, E.outQuint], [44, 1.03, E.lin]]), yaw: keys(t, [[41.15, 0.1], [42.8, 0, E.outQuint]]), pitch: 0.02 })
-    grid.material.opacity = 0.07 * (1 - tw(t, 43.2, 44))
+    grid.material.opacity = GRID * (1 - tw(t, 43.2, 44))
     front.draw(() => false)
   }
   return s

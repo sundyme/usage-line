@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { E, clamp, keys, lerp, prog, tw } from './engine.js'
 import { glow, toPx } from './kit.js'
 import { AMBER, BLUE, DIM, F, FAINT, FG, RED, SURFACE, SURFACE2, TAU, drawRow, glowSpot, measure, mix, reveal, rgba, ring, rowItems, rowLayout, text, typed } from './ui.js'
-import { D, at, orbit, panel, rr, shadow, snap, world } from './f2kit.js'
+import { D, at, orbit, panel, rr, shadow, snap, world, GRID, edge } from './f2kit.js'
 
 export const SUB = '#a8a299'
 const BG = '#121110'
@@ -57,7 +57,30 @@ const QUESTIONS = [
 ]
 const QW = 1500
 const QH = 200
-function drawQuestion(ctx, q, t) {
+// where a question's tag sits on its plane: the point the question condenses into (T2)
+const scratch = document.createElement('canvas').getContext('2d')
+function tagAnchor(q) {
+  const left = q.align === 'left'
+  const x = left ? 20 : QW - 20
+  const zw = measure(scratch, q.zh, F.bold(78))
+  const tf = q.tag.startsWith('/') ? F.mono(22) : F.reg(22)
+  const tw2 = measure(scratch, q.tag, tf) + 28
+  return [left ? x + zw + 26 + tw2 / 2 : x - zw - 26 - tw2 / 2, 74]
+}
+function drawQuestion(ctx, q, t, c = 0, color = BLUE) {
+  if (c <= 0) return drawQuestionBody(ctx, q, t)
+  const [ax, ay] = tagAnchor(q)
+  ctx.save()
+  ctx.translate(ax, ay)
+  ctx.scale(1 - 0.94 * c, 1 - 0.7 * c)
+  ctx.translate(-ax, -ay)
+  ctx.globalAlpha *= 1 - c * c
+  ctx.filter = `blur(${(c * 9).toFixed(1)}px)`
+  drawQuestionBody(ctx, q, t)
+  ctx.restore()
+  glowSpot(ctx, ax, ay, 90, color, Math.sin(Math.PI * Math.min(1, c * 1.2)) * 0.8)
+}
+function drawQuestionBody(ctx, q, t) {
   const left = q.align === 'left'
   const x = left ? 20 : QW - 20
   reveal(ctx, q.zh, x, 100, F.bold(78), FG, tw(t, q.at, q.at + 0.85, E.lin), { align: q.align, dy: 44, spread: 4, blur: 14 })
@@ -90,6 +113,17 @@ const FLY0 = 4.85
 const FLY_GAP = 0.07
 const FLY_DUR = 1.0
 const MERGE = [8.2, 8.85]
+// The 4–6 s transition, chosen by ?tr=: 't1' (the film's: the camera flies through the questions
+// to the row waiting behind them), 't2' (each question condenses into its ring), 'now' (v2.1).
+const TR = new URLSearchParams(location.search).get('tr') || 't1'
+const T1 = { push: [3.9, 6.0], row: 4.75 }
+const COL0 = 4.5
+const COL_GAP = 0.17
+const COL_DUR = 0.4
+const SPAWN = 0.22
+const FLY2 = 0.78
+const colAt = i => COL0 + i * COL_GAP
+const LANDED = colAt(3) + SPAWN + FLY2
 const bigLayout = (() => {
   const c = document.createElement('canvas').getContext('2d')
   const L = rowLayout(c, BIG_ITEMS, 'short', BIG)
@@ -102,7 +136,7 @@ const markOrigin = ctx => {
 }
 // one item of the big row: ring, value, label, each with its own presence
 function bigItem(ctx, it, x, yc, { fill = 1, textA = 1, r = BIG * 0.45, lw = BIG * 0.15, glow = 18 } = {}) {
-  ring(ctx, x, yc, r, lw, it.frac * fill, it.color, { glow, minArc: 0 })
+  ring(ctx, x, yc, r, lw, it.frac * fill, it.color, { glow, minArc: 0, track: TR === 'now' ? 0.35 : 0.6 })
   if (textA <= 0.001) return
   ctx.save()
   ctx.globalAlpha *= textA
@@ -114,8 +148,8 @@ function bigItem(ctx, it, x, yc, { fill = 1, textA = 1, r = BIG * 0.45, lw = BIG
 function drawRowToMark(ctx, t) {
   const { L, x0 } = bigLayout
   const ox = markOrigin(ctx)
-  const settled = t >= FLY0 + 3 * FLY_GAP + FLY_DUR * 0.6
-  const fill = i => tw(t, FLY0 + i * FLY_GAP + 0.45, 6.0, E.inOutCubic)
+  const settled = TR === 't1' ? t >= T1.row : TR === 't2' ? t >= LANDED : t >= FLY0 + 3 * FLY_GAP + FLY_DUR * 0.6
+  const fill = i => (TR === 't2' ? 1 : TR === 't1' ? tw(t, 4.5 + i * 0.1, 6.0, E.inOutCubic) : tw(t, FLY0 + i * FLY_GAP + 0.45, 6.0, E.inOutCubic))
   const flash = t >= 6.0 ? Math.exp(-(t - 6.0) * 3) : 0
   // the headline above, the English below, between the landing and the zip
   const hA = tw(t, 6.0, 6.6) * (1 - tw(t, 7.85, 8.25, E.inCubic))
@@ -193,8 +227,12 @@ export function intro() {
   })
   const stage = panel(1920, 1080, { res: 1 })
   s.scene.add(stage)
+  const PXU = at(961, 0)[0] - at(960, 0)[0] // one frame px in world units
+  const ZF = D * 1.3 // T1: how far behind the questions the row waits
   s.update = t => {
     bg.userData.tick(t)
+    // T1: the whole field comes at the camera, as if we flew forward through it
+    const S = TR === 't1' ? ZF * E.inOutCubic(prog(t, ...T1.push)) : 0
     QUESTIONS.forEach((q, i) => {
       const p = qs[i]
       const next = QUESTIONS[i + 1]
@@ -204,6 +242,51 @@ export function intro() {
       const k = (D - q.z) / D
       const [wx, wy] = at(cx, q.y - 100 + QH / 2)
       const drift = (left ? 1 : -1) * 0.18 * tw(t, q.at, 5, E.lin)
+      if (TR === 't1') {
+        // nearest first, each plane parts from the centre as it passes us, and is gone before it fills the frame
+        const order = [0, 2, 1, 3].indexOf(i)
+        const part = E.inCubic(prog(t, 4.0 + order * 0.12, 5.4 + order * 0.12))
+        const z = q.z + S
+        const near = clamp((z - 0.38 * D) / (0.3 * D))
+        p.position.set(wx * k + drift + (left ? -1 : 1) * 900 * PXU * part, wy * k * (1 + 0.4 * part), z)
+        p.scale.setScalar(1)
+        p.material.opacity = lerp(dim, 1, tw(t, 3.9, 4.6)) * (1 - near)
+        p.visible = t >= q.at && p.material.opacity > 0.003
+        if (p.visible) p.userData.draw(`${Math.round(t * 60)}`, ctx => drawQuestion(ctx, q, t))
+        flyers[i].card.visible = false
+        return
+      }
+      if (TR === 't2') {
+        // the question condenses into its tag; from that point its ring, already reading, flies to the row
+        const c = tw(t, colAt(i), colAt(i) + COL_DUR, E.inCubic)
+        const rest = 1 - 0.6 * tw(t, 4.2, 4.5)
+        p.position.set(wx * k + drift, wy * k, q.z)
+        p.scale.setScalar(1)
+        p.material.opacity = lerp(dim * rest, 1, tw(t, colAt(i) - 0.2, colAt(i)))
+        p.visible = t >= q.at && c < 1
+        const color = BIG_ITEMS[i].color
+        if (p.visible) p.userData.draw(`${Math.round(t * 60)}`, ctx => drawQuestion(ctx, q, t, c, color))
+        const F2 = flyers[i]
+        const t0 = colAt(i) + SPAWN
+        const e = E.inOutCubic(prog(t, t0, t0 + FLY2))
+        const sc = lerp(0.45, 1, E.outCubic(prog(t, t0, t0 + FLY2)))
+        const [ax, ay] = tagAnchor(q)
+        const [sx, sy] = at(cx - QW / 2 + ax, q.y - 100 + ay)
+        const [ex, ey] = at(F2.tx, BIG_Y)
+        const dx = (60 + BIG * 0.45 - F2.w / 2) * PXU // the ring's offset from the card's centre
+        F2.card.position.set(lerp(sx * k + drift, ex + dx, e) - dx * sc, lerp(sy * k, ey, e), lerp(q.z, 0, e) + 1.0 * Math.sin(Math.PI * e))
+        F2.card.rotation.set(0, (left ? -0.35 : 0.35) * (1 - e), 0)
+        F2.card.scale.setScalar(sc)
+        const a = tw(t, t0 - 0.06, t0 + 0.12)
+        F2.card.visible = a > 0 && t < LANDED
+        F2.card.material.opacity = a
+        if (F2.card.visible) {
+          const fill = E.outCubic(prog(t, t0, t0 + 0.55))
+          const textA = tw(t, t0 + 0.15, t0 + 0.5)
+          F2.card.userData.draw(`${Math.round(fill * 60)}${Math.round(textA * 30)}`, ctx => bigItem(ctx, BIG_ITEMS[i], 60 + BIG * 0.45, BIG * 1.3, { fill, textA }))
+        }
+        return
+      }
       // the question gives way to its answer: it sinks back and blurs out as the ring leaves it
       const go = tw(t, FLY0 + i * FLY_GAP - 0.15, FLY0 + i * FLY_GAP + 0.35, E.inCubic)
       p.position.set(wx * k + drift, wy * k, q.z - 1.5 * go)
@@ -228,17 +311,28 @@ export function intro() {
         F2.card.userData.draw(`${Math.round(fill * 60)}${Math.round(e * 30)}`, ctx => bigItem(ctx, BIG_ITEMS[i], 60 + BIG * 0.45, BIG * 1.3, { fill, textA: tw(t, F2.t0 + 0.3, F2.t0 + 0.7) }))
       }
     })
-    stage.visible = t >= FLY0 + 3 * FLY_GAP + FLY_DUR * 0.6 - 0.02
+    if (TR === 't1') {
+      stage.visible = t >= T1.row
+      stage.position.z = S - ZF
+      stage.material.opacity = tw(t, T1.row, T1.row + 0.6)
+      grid.position.z = -10 + 0.3 * S
+    } else stage.visible = TR === 't2' ? t >= LANDED : t >= FLY0 + 3 * FLY_GAP + FLY_DUR * 0.6 - 0.02
     if (stage.visible) stage.userData.draw(`${Math.round(t * 120)}`, ctx => drawRowToMark(ctx, t))
-    const cam = keys(t, [
+    const cam = keys(t, TR === 'now' ? [
       [0, [-0.12, 0.05, 1.06]],
       [4.6, [0.1, -0.035, 0.92], E.inOutSine],
       [5.7, [0, 0, 1.0], E.inOutCubic],
       [8.1, [-0.03, 0.01, 0.95], E.inOutSine],
       [10.5, [0.03, 0.01, 0.9], E.inOutSine],
+    ] : [
+      // one unbroken move from the first question to the row, landing on the downbeat
+      [0, [-0.12, 0.05, 1.06]],
+      [6.2, [0, 0, 1.0], E.inOutSine],
+      [8.1, [-0.03, 0.01, 0.95], E.inOutSine],
+      [10.5, [0.03, 0.01, 0.9], E.inOutSine],
     ])
     orbit(s.camera, t, [0, 0, 0], { yaw: cam[0], pitch: cam[1], dist: cam[2] })
-    grid.material.opacity = 0.07
+    grid.material.opacity = GRID
     front.draw(() => false)
   }
   return s
@@ -265,6 +359,7 @@ function drawWindowBody(ctx, t, prompt) {
   ctx.strokeStyle = rgba(FG, 0.1)
   ctx.lineWidth = 1.5
   ctx.stroke()
+  edge(ctx, WIN.x, WIN.y, WIN.w, WIN.h, 26)
   for (let i = 0; i < 3; i++) {
     ctx.beginPath()
     ctx.arc(WIN.x + 30 + i * 24, WIN.y + 29, 7, 0, TAU)
@@ -464,7 +559,7 @@ export function inPlace() {
     const dist = keys(t, [[9.95, 0.95], [11.0, 0.76, E.outCubic], [11.85, 0.72, E.lin], [12.75, 1.0, E.inOutCubic], [12.9, 1.0], [15.0, 0.54, E.inOutCubic]])
     const yaw = keys(t, [[9.95, -0.1], [11.75, -0.04, E.inOutSine], [12.75, 0, E.inOutCubic], [15.0, 0.05, E.inOutSine]])
     orbit(s.camera, t, tgt, { dist: lerp(dist, 0.07, dive), yaw: yaw * (1 - dive), pitch: keys(t, [[9.95, 0.08], [12.75, 0, E.inOutCubic]]), drift: 0.01 * (1 - dive) })
-    grid.material.opacity = 0.07 * (1 - dive)
+    grid.material.opacity = GRID * (1 - dive)
 
     // callouts, in screen space, from where each ring lands
     front.draw(ctx => {
