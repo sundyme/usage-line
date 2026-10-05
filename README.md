@@ -110,7 +110,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/usage-line
 
 ## 发布影片是怎么做的
 
-没有剪辑软件，没有模板和素材。44 秒的影片按 [`film/BRIEF.md`](film/BRIEF.md) 的分镜，在预告片同一套 three.js 引擎里渲染（[`trailer/src/film2.js`](trailer/src/film2.js) 及 `f2*.js`）。每块界面都是透视相机拍摄的 3D 平面，因此有真实的运镜与视差；转场都在镜头内完成：圆环接圆环、窗口翻面成终端、从对勾处展开光圈。v1 的 2D 版本仍在 [`film/render.mjs`](film/render.mjs)（Skia 逐帧绘制）。[`film/score.py`](film/score.py) 只用 numpy 合成配乐与音效（加法合成的 pad、FM 钟声、正弦底鼓、噪声扫频和卷积混响），每一个 UI 音效都对齐画面里的那一帧。
+没有剪辑软件，没有模板和素材。44 秒的影片按 [`film/BRIEF.md`](film/BRIEF.md) 的分镜，在预告片同一套 three.js 引擎里渲染（[`trailer/src/film2.js`](trailer/src/film2.js) 及 `f2*.js`）。每块界面都是透视相机拍摄的 3D 平面，因此有真实的运镜与视差；转场都在镜头内完成：圆环接圆环、窗口翻面成终端、从对勾处展开光圈。v1 的 2D 版本仍在 [`film/render.mjs`](film/render.mjs)（Skia 逐帧绘制）。音乐是一段 [ElevenLabs](https://elevenlabs.io) 生成的 120 BPM 纯器乐，[`film/fit_music.py`](film/fit_music.py) 在它的 drop 上找到小节线，只在整乐句处剪辑，让 drop 落在镜头冲进缓存圆环的第 16 秒、收尾和弦落在片尾。[`film/score.py`](film/score.py) 只用 numpy 合成全部音效（噪声扫频、正弦重击、读秒滴答、打字声和卷积混响），每一个 UI 音效都对齐画面里的那一帧，音乐在音效下自动让位；不给 `MUSIC` 时它也能合成整段配乐。
 
 ```bash
 cd film && npm install && python3 score.py && node render.mjs

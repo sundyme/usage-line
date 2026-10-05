@@ -5,8 +5,14 @@ filtered-noise whooshes and a convolution reverb, with every UI sound placed on 
 the picture (render.mjs) puts its event. 120 BPM, D major; the picture cuts on the bar.
 
     python3 score.py   →   out/score.wav (48 kHz, 16-bit stereo)
+
+With MUSIC set, the music is that recording instead (an ElevenLabs take), shifted by MUSIC_SHIFT
+seconds so its downbeat meets the picture's at 6.0 s, and ducked under the sound design:
+
+    MUSIC=out/eleven.mp3 MUSIC_SHIFT=0.12 python3 score.py
 """
 import os
+import subprocess
 import wave
 
 import numpy as np
@@ -190,51 +196,53 @@ G9 = [43, 50, 54, 57, 61]
 A6 = [45, 52, 59, 62, 66]
 PROG = [D9, Bm9, G9, A6]
 
-# the questions: a low drone and a clock on every beat
-for n, g in ((50, 0.06), (57, 0.035)):
-    t = tt(6.4)
-    s = np.sin(2 * np.pi * midi(n) * t) + 0.3 * np.sin(2 * np.pi * midi(n) * 2.003 * t)
-    place(music, 0.0, s * np.minimum(1, t / 2.5) * np.clip((6.4 - t) / 0.6, 0, 1), g, 0.0, verb=0.3)
-for b in range(1, 12):
-    tick(b * 0.5, gain=0.05 + 0.006 * b, f=2400 if b % 2 else 1800, pan=-0.3 if b % 2 else 0.3, verb=0.25)
+MUSIC = os.environ.get('MUSIC')
+if not MUSIC:
+    # the questions: a low drone and a clock on every beat
+    for n, g in ((50, 0.06), (57, 0.035)):
+        t = tt(6.4)
+        s = np.sin(2 * np.pi * midi(n) * t) + 0.3 * np.sin(2 * np.pi * midi(n) * 2.003 * t)
+        place(music, 0.0, s * np.minimum(1, t / 2.5) * np.clip((6.4 - t) / 0.6, 0, 1), g, 0.0, verb=0.3)
+    for b in range(1, 12):
+        tick(b * 0.5, gain=0.05 + 0.006 * b, f=2400 if b % 2 else 1800, pan=-0.3 if b % 2 else 0.3, verb=0.25)
 
-bar = 2.0
-for k, at in enumerate(np.arange(6.0, 41.0, bar)):
-    chord = PROG[k % 4]
-    quiet = 30.0 <= at < 32.5
-    pad(chord, at, bar, gain=0.075 if not quiet else 0.06, bright=5.0 + (2.0 if at >= 16 else 0))
-    # bass on the eighths from the product shot on, resting through the context breath
-    if 10.0 <= at and not quiet:
-        root = chord[0] - 12
-        for e8 in range(8):
-            if at + e8 * 0.25 >= 41.0:
-                break
-            if 30.0 <= at + e8 * 0.25 < 32.5:
-                continue
-            t = tt(0.24)
-            s = np.sin(2 * np.pi * midi(root) * t) + 0.2 * np.sin(4 * np.pi * midi(root) * t)
-            place(music, at + e8 * 0.25, np.tanh(1.3 * s) * env(0.24, 0.004, curve=5), 0.11 if at < 38 else 0.06)
-    # the groove: a soft kick and hats through the features
-    for beat in range(4):
-        tb = at + beat * 0.5
-        if (16.0 <= tb < 30.0) or (32.5 <= tb < 38.0):
-            kick(tb, 0.32)
-            hat(tb + 0.25, 0.045, pan=0.25)
-            hat(tb + 0.375, 0.02, pan=-0.25)
-    # arpeggio, one octave up, sixteenths
-    if (16.0 <= at < 30.0) or (32.5 <= at < 38.0):
-        pattern = [0, 2, 1, 3, 2, 4, 1, 3]
-        for i in range(16):
-            n = chord[pattern[i % 8]] + 12
-            pluck(midi(n), at + i * 0.125, gain=0.035 + 0.01 * (i % 4 == 0), pan=-0.4 + 0.8 * ((i * 3) % 8) / 7)
+    bar = 2.0
+    for k, at in enumerate(np.arange(6.0, 41.0, bar)):
+        chord = PROG[k % 4]
+        quiet = 30.0 <= at < 32.5
+        pad(chord, at, bar, gain=0.075 if not quiet else 0.06, bright=5.0 + (2.0 if at >= 16 else 0))
+        # bass on the eighths from the product shot on, resting through the context breath
+        if 10.0 <= at and not quiet:
+            root = chord[0] - 12
+            for e8 in range(8):
+                if at + e8 * 0.25 >= 41.0:
+                    break
+                if 30.0 <= at + e8 * 0.25 < 32.5:
+                    continue
+                t = tt(0.24)
+                s = np.sin(2 * np.pi * midi(root) * t) + 0.2 * np.sin(4 * np.pi * midi(root) * t)
+                place(music, at + e8 * 0.25, np.tanh(1.3 * s) * env(0.24, 0.004, curve=5), 0.11 if at < 38 else 0.06)
+        # the groove: a soft kick and hats through the features
+        for beat in range(4):
+            tb = at + beat * 0.5
+            if (16.0 <= tb < 30.0) or (32.5 <= tb < 38.0):
+                kick(tb, 0.32)
+                hat(tb + 0.25, 0.045, pan=0.25)
+                hat(tb + 0.375, 0.02, pan=-0.25)
+        # arpeggio, one octave up, sixteenths
+        if (16.0 <= at < 30.0) or (32.5 <= at < 38.0):
+            pattern = [0, 2, 1, 3, 2, 4, 1, 3]
+            for i in range(16):
+                n = chord[pattern[i % 8]] + 12
+                pluck(midi(n), at + i * 0.125, gain=0.035 + 0.01 * (i % 4 == 0), pan=-0.4 + 0.8 * ((i * 3) % 8) / 7)
 
-# the closing chord
-pad(D9 + [74], 41.0, 2.4, gain=0.09, bright=7.0, attack=0.2, release=1.2)
-pad([38, 45], 41.0, 2.4, gain=0.07, bright=3.0, attack=0.1, release=1.2)
-fade = np.ones(N)
-i0 = int(42.6 * SR)
-fade[i0:] = np.linspace(1, 0, N - i0) ** 1.6
-music *= fade
+    # the closing chord
+    pad(D9 + [74], 41.0, 2.4, gain=0.09, bright=7.0, attack=0.2, release=1.2)
+    pad([38, 45], 41.0, 2.4, gain=0.07, bright=3.0, attack=0.1, release=1.2)
+    fade = np.ones(N)
+    i0 = int(42.6 * SR)
+    fade[i0:] = np.linspace(1, 0, N - i0) ** 1.6
+    music *= fade
 
 # ── sound design, frame-locked to render.mjs ────────────────────────────────────────────────
 # 01 the questions arrive
@@ -335,6 +343,24 @@ riser(41.3, 1.1, gain=0.05, f0=800, f1=6000)
 bell(midi(86), 42.4, gain=0.11, d=2.4, ratio=1.0, index=0.6, verb=0.8)
 bell(midi(93), 42.42, gain=0.06, d=2.4, ratio=1.0, index=0.4, pan=0.3, verb=0.8)
 
+# ── a recorded score instead: shifted onto the picture's downbeat, ducked under the hits ───────
+if MUSIC:
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', MUSIC, '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], capture_output=True, check=True).stdout
+    rec = np.frombuffer(raw, '<f4').reshape(-1, 2).T.astype(float)
+    shift = int(float(os.environ.get('MUSIC_SHIFT', '0')) * SR)
+    rec = rec[:, shift:] if shift > 0 else np.pad(rec, ((0, 0), (-shift, 0)))
+    rec = np.pad(rec, ((0, 0), (0, max(0, N - rec.shape[1]))))[:, :N]
+    rec *= 10 ** (float(os.environ.get('MUSIC_DB', '-20')) / 20) / np.sqrt(np.mean(rec ** 2))
+    # the sound design's envelope, smoothed: the music gives way by up to 5 dB under it
+    e = np.abs(sfx).max(axis=0)
+    k = int(0.12 * SR)
+    e = np.convolve(e, np.ones(k) / k, mode='same')
+    duck = 1 - 0.44 * np.clip(e / (np.percentile(e, 99.5) + 1e-9), 0, 1)
+    end = np.ones(N)
+    i0 = int(42.6 * SR)
+    end[i0:] = np.linspace(1, 0, N - i0) ** 1.6
+    music = rec * duck * end / 0.9
+
 # ── reverb, master ─────────────────────────────────────────────────────────────────────────
 ir_t = tt(3.2)
 ir = rng.standard_normal((2, len(ir_t))) * np.exp(-ir_t / 0.75)
@@ -356,9 +382,9 @@ mix *= tail
 
 os.makedirs(OUT, exist_ok=True)
 pcm = (np.clip(mix.T, -1, 1) * 32767).astype('<i2')
-with wave.open(os.path.join(OUT, 'score.wav'), 'wb') as w:
+with wave.open(os.path.join(OUT, os.environ.get('SCORE', 'score.wav')), 'wb') as w:
     w.setnchannels(2)
     w.setsampwidth(2)
     w.setframerate(SR)
     w.writeframes(pcm.tobytes())
-print('score.wav', f'{DUR:.0f}s', f'rms {20 * np.log10(np.sqrt(np.mean(mix ** 2))):.1f} dBFS')
+print(os.environ.get('SCORE', 'score.wav'), f'music rms {20 * np.log10(np.sqrt(np.mean(music ** 2))):.1f}', f'{DUR:.0f}s', f'rms {20 * np.log10(np.sqrt(np.mean(mix ** 2))):.1f} dBFS')
