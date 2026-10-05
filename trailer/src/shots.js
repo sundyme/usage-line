@@ -1,2 +1,2 @@
-// The film: see v5.js for the shots, the cuts between them, and the grade.
-export { buildShots, drawHud, look } from './v5.js'
+// The film: see v6.js for the cut, the shots it reuses from v5, and the grade.
+export { buildShots, drawHud, look } from './v6.js'

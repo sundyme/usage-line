@@ -94,7 +94,7 @@ export function limits() {
     shoot(s.camera, t, pos, tgt, FOV, { drift: 0.02, shake: shot * 0.02 })
     back.draw(() => false)
     front.draw(ctx => {
-      head(ctx, t, '额度和上下文，', '也不用再点开。', { t0: 30.25, t1: 35.0, x: 120, y: 170, size: 60, lag: 0.25 })
+      head(ctx, t, '额度和上下文，', '同样一眼看清。', { t0: 30.25, t1: 35.0, x: 120, y: 170, size: 60, lag: 0.25 })
       const subs = [
         [30.95, 32.15, '5 小时额度：70% 琥珀，90% 变红。'],
         [32.35, 33.6, '7 天额度：重置时间，一并显示。'],
