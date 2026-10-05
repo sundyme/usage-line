@@ -50,7 +50,7 @@ claude plugin install usage-line@usage-line
 ## Where it shows
 
 - **Desktop and VS Code**: a row directly above the prompt, with SVG rings. In a narrow window it drops the reset countdowns first, then the labels, keeping rings and numbers; it never squeezes or truncates. It steps aside while a survey is shown.
-- **Terminal**: a dim tail on the hint row under the prompt, with `○ ◔ ◑ ◕ ●` for the rings.
+- **Terminal**: the same row, on its own line directly above the prompt, with `○ ◔ ◑ ◕ ●` in the ring colours. A narrow terminal drops the reset countdowns, then the labels, and past that the row wraps rather than hides.
 
 ## How the cache countdown works
 

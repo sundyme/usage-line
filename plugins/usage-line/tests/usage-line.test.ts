@@ -266,23 +266,42 @@ describe('session events', () => {
 })
 
 describe('terminal', () => {
-  test('the line rides the hint row, and the band is left to the engine', async ($, on) => {
-    const { w } = world(on)
+  async function termBand($: Engine, bodyColumns = 120) {
+    const ui = await $.ui.mount({
+      plugin: PLUGIN,
+      surface: 'terminal',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 8, bodyColumns, scroll: { offset: 0, bodyRows: 8 }, view: {} },
+    })
+    return (await ui.findAll({ type: 'Text' })).map(t => ({ text: t.text, color: (t.props as { color?: string }).color }))
+  }
+
+  test('the row takes its own line above the prompt, pies in the ring colours', async ($, on) => {
+    world(on)
     await start($)
     await step($)
+    const texts = await termBand($)
+    expect(texts.map(t => t.text)).toEqual(['●', '60:00', '缓存', '◔', '13%', `5h${NBSP}↻2h54m`, '◕', '63%', `7d${NBSP}↻4d5h`, '◔', '25%', '上下文'])
+    expect(texts[0].color).toBe('#4e8ff7')
+  })
+
+  test('a narrow terminal drops the reset countdowns, then the labels, but never the figures', async ($, on) => {
+    world(on)
+    await start($)
+    await step($)
+    expect((await termBand($, 60)).map(t => t.text)).toEqual(['●', '60:00', '缓存', '◔', '13%', '5h', '◕', '63%', '7d', '◔', '25%', '上下文'])
+    expect((await termBand($, 34)).map(t => t.text)).toEqual(['●', '60:00', '◔', '13%', '◕', '63%', '◔', '25%'])
+  })
+
+  test('the hint row under the prompt is left to the engine', async ($, on) => {
+    const { w } = world(on)
+    await start($)
     await $.ui.mount({
       plugin: PLUGIN,
       surface: 'terminal',
       component: 'PromptHint',
       props: { isDraft: false, isWorking: false, hint: '? for shortcuts' },
     })
-    expect(w.tails[w.tails.length - 1]).toBe(`● 60:00 缓存   ◔ 13% 5h${NBSP}↻2h54m   ◕ 63% 7d${NBSP}↻4d5h   ◔ 25% 上下文`)
-    const above = await $.ui.mount({
-      plugin: PLUGIN,
-      surface: 'terminal',
-      component: 'AbovePrompt',
-      props: { hasSurvey: false, isWorking: false, maxRows: 8, bodyColumns: 120, scroll: { offset: 0, bodyRows: 8 }, view: {} },
-    })
-    expect(await above.find({ key: 'engine-band' })).toBeDefined()
+    expect(w.tails[w.tails.length - 1]).toBe('')
   })
 })

@@ -1,6 +1,6 @@
 {
   "name": "usage-line",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Prompt-cache countdown, 5h / 7d usage and context fill as rings in one slim row by the prompt",
   "author": {
     "name": "sundyme",

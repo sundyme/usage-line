@@ -10,7 +10,7 @@ import { D, FOV, INK, at, head, line, pool, stage } from './stage.js'
 const C = { x: 960, y: 590 } // both panels share this centre, screen px
 const M = { w: 1400, h: 560 } // the morph canvas: holds the window and the terminal
 const WIN = { h: 470, r: 18 }
-const TERM = { w: 1200, h: 440, r: 16 }
+const TERM = { w: 1200, h: 480, r: 16 }
 const MORPH = [25.2, 26.0]
 const CMD = '再补一组单元测试'
 const TYPE0 = 25.95
@@ -58,12 +58,17 @@ function termBody(ctx, t, items) {
   })
   text(ctx, '~/api-server — claude', w / 2, 30, F.mono(18), '#777', { align: 'center' })
   text(ctx, '✻ Welcome to Claude Code', 36, 96, mono, CC.orange)
-  text(ctx, '> 把 token 统计拆成独立模块', 36, 146, mono, '#8d8d8d')
+  text(ctx, '❯ 把 token 统计拆成独立模块', 36, 146, mono, '#8d8d8d')
   text(ctx, '⏺ 拆分完成，测试全部通过。', 36, 192, mono, '#d4d4d4')
   const sent = t >= SEND
-  // on enter, the line is released into the history and the box slides away beneath it
+  // on enter, the line goes into the history; the row and the prompt move down beneath it
   const rel = E.inOutCubic(prog(t, SEND, SEND + 0.3))
-  if (sent) text(ctx, `> ${CMD}`, lerp(46, 36, rel), lerp(260, 238, rel), mono, mix('#e8e8e8', '#8d8d8d', rel))
+  if (sent) {
+    ctx.save()
+    ctx.globalAlpha = tw(t, SEND + 0.08, SEND + 0.3)
+    text(ctx, `❯ ${CMD}`, 36, lerp(250, 238, rel), mono, '#8d8d8d')
+    ctx.restore()
+  }
   if (sent && t < REPLY) {
     ctx.save()
     ctx.globalAlpha = tw(t, SEND + 0.2, SEND + 0.35)
@@ -76,31 +81,30 @@ function termBody(ctx, t, items) {
     text(ctx, '⏺ 已补 6 个测试，全部通过。', 36, 284, mono, '#d4d4d4')
     ctx.restore()
   }
-  // the input box slides down as the history grows
-  const by = lerp(222, 314, E.inOutCubic(prog(t, SEND, SEND + 0.3)))
-  ctx.strokeStyle = '#3a3a3a'
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.roundRect(28, by, w - 56, 58, 8)
-  ctx.stroke()
-  text(ctx, '>', 46, by + 38, mono, '#cfcfcf')
-  const typed = sent ? '' : CMD.slice(0, clamp(Math.floor((t - TYPE0) / 0.085) + 1, 0, CMD.length))
-  text(ctx, typed, 76, by + 38, mono, '#e8e8e8')
-  if ((blink(t) || (t > TYPE0 && t < SEND)) && !(t >= SEND && t < SEND + 0.3)) {
-    ctx.fillStyle = '#cfcfcf'
-    ctx.fillRect(78 + measure(ctx, typed, mono), by + 15, 14, 29)
-  }
-  // the row, as the terminal draws it: pie glyphs
-  const ry = by + 96
+  const off = 92 * rel
+  // usage-line's own row, directly above the prompt, as the terminal draws it: pie glyphs
+  const ry = 246 + off
   const f = F.mono(24)
-  let x = 42
+  let x = 38
   items.forEach(it => {
     pie(ctx, x + 10, ry - 8, 10, it.frac, it.color)
-    text(ctx, it.value, x + 28, ry, f, '#e2e2e2')
+    text(ctx, it.value, x + 30, ry, f, '#e2e2e2')
     const lw = measure(ctx, it.value, f)
-    text(ctx, it.short, x + 38 + lw, ry, f, '#7a7a7a')
-    x += 38 + lw + measure(ctx, it.short, f) + 40
+    text(ctx, it.label, x + 44 + lw, ry, f, '#7a7a7a')
+    x += 44 + lw + measure(ctx, it.label, f) + 30
   })
+  // the prompt between two rules, and the engine's hint line under it
+  ctx.fillStyle = '#4a4a4a'
+  ctx.fillRect(20, 268 + off, w - 40, 1.5)
+  ctx.fillRect(20, 328 + off, w - 40, 1.5)
+  text(ctx, '❯', 38, 307 + off, mono, '#cfcfcf')
+  const typed = sent ? '' : CMD.slice(0, clamp(Math.floor((t - TYPE0) / 0.085) + 1, 0, CMD.length))
+  text(ctx, typed, 72, 307 + off, mono, '#e8e8e8')
+  if ((blink(t) || (t > TYPE0 && t < SEND)) && !(t >= SEND && t < SEND + 0.3)) {
+    ctx.fillStyle = '#cfcfcf'
+    ctx.fillRect(74 + measure(ctx, typed, mono), 284 + off, 14, 29)
+  }
+  text(ctx, '? for shortcuts', 38, 364 + off, F.mono(21), '#6f6f6f')
 }
 
 export function adapt6() {
@@ -171,14 +175,14 @@ export function adapt6() {
       })
     }
     // the camera: ease in on the folding row, ease back for the terminal, then close in on the glyphs
-    const row = [C.x - TERM.w / 2 + 340, C.y - TERM.h / 2 + 410]
+    const row = [C.x - TERM.w / 2 + 520, C.y - TERM.h / 2 + 330]
     const cam = keys(t, [
       [22.0, [C.x, C.y - 30, 0.92]],
       [25.1, [C.x, C.y - 30, 0.82], E.inOutSine],
       [26.0, [C.x, C.y - 30, 0.8], E.inOutCubic],
       [26.75, [C.x, C.y - 30, 0.78], E.lin],
-      [27.55, [row[0], row[1] - 60, 0.42], E.inOutQuart],
-      [29.3, [row[0] + 30, row[1] - 60, 0.39], E.lin],
+      [27.55, [row[0], row[1] - 40, 0.55], E.inOutQuart],
+      [29.3, [row[0] + 20, row[1] - 40, 0.52], E.lin],
     ])
     const close = E.inOutQuart(prog(t, 26.75, 27.55))
     const [tx, ty] = at(cam[0], cam[1])

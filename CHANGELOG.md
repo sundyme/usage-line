@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — 2026-10-05
+
+- Terminal: the row now has its own line directly above the prompt, with the text pies in
+  the ring colours. Before, it rode the end of the hint row under the prompt, where mode
+  hints such as `auto mode on (shift+tab to cycle)` crowded it and a slightly narrow window
+  cut it off. Now, as on desktop, a narrow terminal drops the reset countdowns, then the
+  labels, and past that the row wraps instead of hiding.
+- 20 tests.
+
 ## 1.0.0 — 2026-10-04
 
 First public release.

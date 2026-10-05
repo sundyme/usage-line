@@ -270,20 +270,39 @@ export const register: Register = (on, options) => {
     return r
   })
 
-  // Terminal: the hint row under the prompt takes the line as a dim tail.
-  on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
-    if (e.surface !== 'terminal') return next(e)
-    const tail = (await items($, baseTtl)).map(it => `${pie(it.frac)} ${it.value} ${it.label}`).join('   ')
-    return next({ ...e, props: { ...e.props, tail } })
-  })
-
-  // Desktop: one slim row directly above the prompt. The footer slot by the model picker
-  // draws text only, so the rings live here, where an Svg is drawn.
+  // One slim row directly above the prompt, on its own line so nothing else crowds it out.
+  // The desktop draws rings (its footer slot by the model picker draws text only); the
+  // terminal draws text pies in the ring colours. As the band narrows the reset countdowns
+  // go first, then the labels; past that the row wraps rather than hides.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || (e.surface !== 'desktop' && e.surface !== 'vscode')) return next(e)
-    const { Box, Text, Svg } = $.ui.resolve(e as typeof e & { surface: 'desktop' })
+    if (e.props.hasSurvey) return next(e)
     const row = await items($, baseTtl)
     const labelOf = labelsFor(row, e.props.bodyColumns)
+    if (e.surface === 'terminal') {
+      const { Box, Text } = $.ui.resolve(e as typeof e & { surface: 'terminal' })
+      return (
+        <Box flexDirection="row" flexWrap="wrap" columnGap={2} rowGap={0} paddingX={1}>
+          {row.map(it => {
+            const label = labelOf(it)
+            return (
+              <Box key={it.key} flexDirection="row" gap={1} flexShrink={0}>
+                <Text color={it.color}>{pie(it.frac)}</Text>
+                {it.minCells ? (
+                  <Box minWidth={it.minCells}>
+                    <Text>{it.value}</Text>
+                  </Box>
+                ) : (
+                  <Text>{it.value}</Text>
+                )}
+                {label ? <Text dimColor>{label}</Text> : null}
+              </Box>
+            )
+          })}
+        </Box>
+      )
+    }
+    if (e.surface !== 'desktop' && e.surface !== 'vscode') return next(e)
+    const { Box, Text, Svg } = $.ui.resolve(e as typeof e & { surface: 'desktop' })
     return (
       <Box flexDirection="row" flexWrap="wrap" alignItems="center" columnGap={2} rowGap={0} paddingX={1}>
         {row.map(it => {
