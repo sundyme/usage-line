@@ -26,6 +26,7 @@ for (const [file, family] of [
   ['SC-Light.ttf', 'SC Light'],
   ['SC-Regular.ttf', 'SC Regular'],
   ['SC-Medium.ttf', 'SC Medium'],
+  ['SC-Bold.ttf', 'SC Bold'],
   ['SC-Black.ttf', 'SC Black'],
   ['Mono-Regular.ttf', 'Mono'],
   ['Mono-SemiBold.ttf', 'Mono SemiBold'],
@@ -36,6 +37,7 @@ const F = {
   light: s => `${s}px "SC Light"`,
   reg: s => `${s}px "SC Regular"`,
   med: s => `${s}px "SC Medium"`,
+  bold: s => `${s}px "SC Bold"`,
   black: s => `${s}px "SC Black"`,
   mono: s => `${s}px "Mono", "SC Regular"`,
   monoB: s => `${s}px "Mono SemiBold", "SC Medium"`,
@@ -49,6 +51,7 @@ const SURFACE2 = '#23211e'
 const FG = '#ece9e2'
 const DIM = '#8c8780'
 const FAINT = '#56524c'
+const SUB = '#a8a299'
 const BLUE = '#4e8ff7'
 const AMBER = '#e5a33a'
 const RED = '#e5534b'
@@ -195,6 +198,27 @@ function reveal(ctx, str, x, y, font, color, p, o = {}) {
     if (q > 0.001) text(ctx, c, cx, y + (1 - q) * dy, font, color, { alpha: alpha * q, blur: (1 - q) * blur })
     cx += widths[i]
   })
+}
+
+// ❯ and ⏺, which no font here carries, drawn to sit on a text baseline at size px.
+function chevron(ctx, x, y, px, color) {
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = Math.max(2, px * 0.11)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(x + px * 0.16, y - px * 0.62)
+  ctx.lineTo(x + px * 0.44, y - px * 0.36)
+  ctx.lineTo(x + px * 0.16, y - px * 0.1)
+  ctx.stroke()
+  ctx.restore()
+}
+function bullet(ctx, x, y, px, color) {
+  ctx.beginPath()
+  ctx.arc(x + px * 0.3, y - px * 0.36, px * 0.17, 0, TAU)
+  ctx.fillStyle = color
+  ctx.fill()
 }
 
 // Typewriter with a block caret.
@@ -489,14 +513,14 @@ function chrome(ctx, t, frame) {
   while (i + 1 < starts.length && t >= starts[i + 1]) i++
   const sw = prog(t, starts[i], starts[i] + 0.45)
   const [num, zh, en] = CHAPTERS[i]
-  text(ctx, num, 76, 82, F.monoB(18), BLUE, { alpha: 0.4 + 0.6 * sw })
-  reveal(ctx, zh, 112, 82, F.med(18), FG, sw, { dy: 8, blur: 4, spread: 2 })
-  reveal(ctx, en, 112 + measure(ctx, zh, F.med(18)) + 14, 82, F.mono(15), DIM, sw, { dy: 8, blur: 4, spread: 4 })
-  text(ctx, 'USAGE-LINE  ·  FOR CLAUDE CODE', W - 76, 82, F.mono(15), DIM, { align: 'right' })
+  text(ctx, num, 76, 84, F.monoB(20), BLUE, { alpha: 0.4 + 0.6 * sw })
+  reveal(ctx, zh, 116, 84, F.med(20), FG, sw, { dy: 8, blur: 4, spread: 2 })
+  reveal(ctx, en, 116 + measure(ctx, zh, F.med(20)) + 16, 84, F.mono(16), DIM, sw, { dy: 8, blur: 4, spread: 4 })
+  text(ctx, 'USAGE-LINE  ·  FOR CLAUDE CODE', W - 76, 84, F.mono(16), DIM, { align: 'right' })
   const tc = `${String(Math.floor(frame / FPS / 60)).padStart(2, '0')}:${String(Math.floor(frame / FPS) % 60).padStart(2, '0')}:${String(frame % FPS).padStart(2, '0')}`
-  text(ctx, tc, W - 76, H - 66, F.mono(15), DIM, { align: 'right' })
+  text(ctx, tc, W - 76, H - 66, F.mono(16), DIM, { align: 'right' })
   ring(ctx, 84, H - 71, 6, 2.2, keys(t, [[0, 0], [DUR - 3, 1, E.lin]]), BLUE)
-  text(ctx, 'v1.0', 100, H - 66, F.mono(15), DIM)
+  text(ctx, 'v1.1', 100, H - 66, F.mono(16), DIM)
   ctx.restore()
 }
 
@@ -524,12 +548,12 @@ function sceneQuestions(ctx, t) {
     ctx.translate(lerp(q.x + drift, 960 + (q.x - 960) * 0.25, c), lerp(q.y, 540, c))
     ctx.scale(lerp(1, 0.72, c), lerp(1, 0.02, c))
     withAlpha(ctx, dim * (1 - prog(t, c0 + 0.55, c0 + 0.8)), () => {
-      reveal(ctx, q.zh, 0, 0, F.black(78), FG, tw(t, q.at, q.at + 0.85, E.lin), { align: q.align, dy: 44, spread: 4, blur: 14 })
-      reveal(ctx, q.en, 0, 62, F.serif(38), DIM, tw(t, q.at + 0.25, q.at + 1.2, E.lin), { align: q.align, dy: 16, spread: 10, blur: 6 })
+      reveal(ctx, q.zh, 0, 0, F.bold(78), FG, tw(t, q.at, q.at + 0.85, E.lin), { align: q.align, dy: 44, spread: 4, blur: 14 })
+      reveal(ctx, q.en, 0, 62, F.serif(42), SUB, tw(t, q.at + 0.25, q.at + 1.2, E.lin), { align: q.align, dy: 16, spread: 10, blur: 6 })
       // where you would have to go to find out
       const tp = tw(t, q.at + 0.55, q.at + 1.0, E.outBack)
       if (tp > 0) {
-        const zw = measure(ctx, q.zh, F.black(78))
+        const zw = measure(ctx, q.zh, F.bold(78))
         const tf = q.tag.startsWith('/') ? F.mono(22) : F.reg(22)
         const tw2 = measure(ctx, q.tag, tf) + 28
         const tx = q.align === 'left' ? zw + 26 : -zw - 26 - tw2
@@ -574,13 +598,13 @@ function sceneOneLine(ctx, t) {
     ctx.beginPath()
     ctx.rect(0, 0, W, y - 7)
     ctx.clip()
-    reveal(ctx, '一行，全看清。', 960, y - 52 + (1 - rise) * 170, F.black(132), FG, tw(t, 6.0, 6.7, E.lin), { align: 'center', dy: 0, spread: 3, blur: 6 })
+    reveal(ctx, '一行，全看清。', 960, y - 52 + (1 - rise) * 170, F.bold(132), FG, tw(t, 6.0, 6.7, E.lin), { align: 'center', dy: 0, spread: 3, blur: 6 })
     ctx.restore()
     ctx.save()
     ctx.beginPath()
     ctx.rect(0, y + 7, W, H)
     ctx.clip()
-    text(ctx, 'Everything you need to know, in one line.', 960, y + 86 - (1 - tw(t, 6.25, 7.1, E.outExpo) * (1 - tw(t, 7.7, 8.2, E.inCubic))) * 120, F.serif(54), DIM, { align: 'center' })
+    text(ctx, 'Everything you need to know, in one line.', 960, y + 86 - (1 - tw(t, 6.25, 7.1, E.outExpo) * (1 - tw(t, 7.7, 8.2, E.inCubic))) * 120, F.serif(58), SUB, { align: 'center' })
     ctx.restore()
   }
 
@@ -928,11 +952,11 @@ function sceneCache(ctx, t) {
     ctx.save()
     ctx.globalAlpha = na
     ctx.translate(X + shake, 560 + (1 - na) * 40)
-    if (expired) text(ctx, value, 0, 0, F.black(236), ncol)
+    if (expired) text(ctx, value, 0, 0, F.bold(236), ncol)
     else text(ctx, value, -8, 0, F.monoB(262), ncol)
     ctx.restore()
-    reveal(ctx, '缓存倒计时，精确到秒。', X, 702, F.black(64), FG, tw(t, 16.6, 17.45, E.lin), { dy: 30, spread: 4, blur: 10 })
-    reveal(ctx, 'Know the moment your prompt cache goes cold.', X, 758, F.serif(40), DIM, tw(t, 16.9, 17.9, E.lin), { dy: 12, spread: 10, blur: 5 })
+    reveal(ctx, '缓存倒计时，精确到秒。', X, 702, F.bold(68), FG, tw(t, 16.6, 17.45, E.lin), { dy: 30, spread: 4, blur: 10 })
+    reveal(ctx, 'Know the moment your prompt cache goes cold.', X, 758, F.serif(40), SUB, tw(t, 16.9, 17.9, E.lin), { dy: 12, spread: 10, blur: 5 })
     // facts
     const FACTS = [
       ['1h', '订阅缓存时长'],
@@ -969,8 +993,8 @@ function sceneLimits(ctx, t) {
   const fiveReset = keys(t, [[24.3, 174], [28.2, 118, E.inOutSine]])
   const sevenReset = keys(t, [[24.3, 6060], [28.2, 5952, E.inOutSine]])
   withAlpha(ctx, 1 - exit, () => {
-    reveal(ctx, '额度用了多少，何时重置。', 168, 236, F.black(64), FG, tw(t, 24.05, 24.95, E.lin), { dy: 30, spread: 4, blur: 10 })
-    reveal(ctx, "How much you've used, and when it resets.", 168, 292, F.serif(40), DIM, tw(t, 24.35, 25.35, E.lin), { dy: 12, spread: 10, blur: 5 })
+    reveal(ctx, '额度用了多少，何时重置。', 168, 232, F.bold(72), FG, tw(t, 24.05, 24.95, E.lin), { dy: 30, spread: 4, blur: 10 })
+    reveal(ctx, "How much you've used, and when it resets.", 168, 300, F.serif(44), SUB, tw(t, 24.35, 25.35, E.lin), { dy: 12, spread: 10, blur: 5 })
     const R = [
       { cx: 690, v: five, name: '5 小时额度', reset: span(fiveReset), at: 24.15, cross: [crossAmber5, crossRed5] },
       { cx: 1230, v: seven, name: '7 天额度', reset: span(sevenReset), at: 24.3, cross: [crossAmber7] },
@@ -1012,10 +1036,10 @@ function sceneLimits(ctx, t) {
         const y = bt + bh * (1 - v / 100)
         ctx.fillStyle = rgba(FG, 0.35)
         ctx.fillRect(bx + 12, y - 1, 12, 2)
-        text(ctx, l, bx + 34, y + 7, F.mono(18), v === 70 ? AMBER : v === 90 ? RED : DIM)
+        text(ctx, l, bx + 34, y + 8, F.mono(21), v === 70 ? AMBER : v === 90 ? RED : DIM)
       })
-      text(ctx, '≥70% 琥珀', bx - 10, bt + bh + 60, F.reg(22), AMBER, { align: 'left' })
-      text(ctx, '≥90% 红色', bx - 10, bt + bh + 94, F.reg(22), RED, { align: 'left' })
+      text(ctx, '≥70% 琥珀', bx - 10, bt + bh + 62, F.reg(25), AMBER, { align: 'left' })
+      text(ctx, '≥90% 红色', bx - 10, bt + bh + 100, F.reg(25), RED, { align: 'left' })
       // markers
       ;[
         [five, '5h'],
@@ -1029,7 +1053,7 @@ function sceneLimits(ctx, t) {
         ctx.lineTo(bx - 22, y + 8)
         ctx.closePath()
         ctx.fill()
-        text(ctx, l, bx - 32, y + 7, F.monoB(18), FG, { align: 'right', alpha: 0.9 })
+        text(ctx, l, bx - 32, y + 8, F.monoB(21), FG, { align: 'right', alpha: 0.9 })
         void k
       })
     })
@@ -1051,8 +1075,8 @@ function sceneContext(ctx, t) {
     text(ctx, `${Math.round(v)}%`, 0, 28, F.monoB(112), FG, { align: 'center' })
     text(ctx, '上下文', 0, 86, F.med(30), DIM, { align: 'center' })
     ctx.restore()
-    reveal(ctx, '上下文占用，一直在眼前。', 960, 840, F.black(60), FG, tw(t, 30.3, 31.1, E.lin), { align: 'center', dy: 26, spread: 4, blur: 8 })
-    reveal(ctx, 'Context fill, always in sight.  /clear and compaction re-read it.', 960, 896, F.serif(36), DIM, tw(t, 30.6, 31.7, E.lin), { align: 'center', dy: 10, spread: 10, blur: 5 })
+    reveal(ctx, '上下文占用，一直在眼前。', 960, 840, F.bold(68), FG, tw(t, 30.3, 31.1, E.lin), { align: 'center', dy: 26, spread: 4, blur: 8 })
+    reveal(ctx, 'Context fill, always in sight.  /clear and compaction re-read it.', 960, 904, F.serif(40), SUB, tw(t, 30.6, 31.7, E.lin), { align: 'center', dy: 10, spread: 10, blur: 5 })
   })
 }
 
@@ -1072,12 +1096,12 @@ function sceneAdaptive(ctx, t) {
   withAlpha(ctx, 1 - exit, () => {
     // headline swaps with the scene's second half
     withAlpha(ctx, 1 - toTerm, () => {
-      reveal(ctx, '窗口再窄，也不挤压。', 168, 236, F.black(64), FG, tw(t, 32.6, 33.45, E.lin), { dy: 30, spread: 4, blur: 10 })
-      reveal(ctx, 'Narrow window? It folds, it never squeezes.', 168, 292, F.serif(40), DIM, tw(t, 32.85, 33.85, E.lin), { dy: 12, spread: 10, blur: 5 })
+      reveal(ctx, '窗口再窄，也不挤压。', 168, 232, F.bold(72), FG, tw(t, 32.6, 33.45, E.lin), { dy: 30, spread: 4, blur: 10 })
+      reveal(ctx, 'Narrow window? It folds, it never squeezes.', 168, 300, F.serif(44), SUB, tw(t, 32.85, 33.85, E.lin), { dy: 12, spread: 10, blur: 5 })
     })
     withAlpha(ctx, toTerm, () => {
-      reveal(ctx, '终端里，一样原生。', 168, 236, F.black(64), FG, tw(t, 35.45, 36.25, E.lin), { dy: 30, spread: 4, blur: 10 })
-      reveal(ctx, 'And right at home in the terminal.', 168, 292, F.serif(40), DIM, tw(t, 35.7, 36.6, E.lin), { dy: 12, spread: 10, blur: 5 })
+      reveal(ctx, '终端里，一样原生。', 168, 232, F.bold(72), FG, tw(t, 35.45, 36.25, E.lin), { dy: 30, spread: 4, blur: 10 })
+      reveal(ctx, 'In the terminal, a line of its own.', 168, 300, F.serif(44), SUB, tw(t, 35.7, 36.6, E.lin), { dy: 12, spread: 10, blur: 5 })
     })
 
     // desktop panel
@@ -1118,51 +1142,77 @@ function sceneAdaptive(ctx, t) {
       ctx.restore()
     })
 
-    // terminal
+    // terminal: since 1.1 the row takes its own line above the ❯ prompt, as on desktop, and
+    // folds by columns the same way: reset countdowns first, then labels, never the figures
     withAlpha(ctx, toTerm, () => {
+      const tf = F.mono(29)
+      const cell = measure(ctx, '0', tf)
+      const tw2 = keys(t, [[36.55, 1584], [36.95, 1120, E.inOutExpo], [37.1, 1120], [37.45, 860, E.inOutExpo]])
       const tx = 168
-      const ty = 430 + (1 - toTerm) * 140
-      const tw2 = 1584
-      roundRect(ctx, tx, ty, tw2, 330, 18)
+      const ty = 392 + (1 - toTerm) * 140
+      const TH = 384
+      const cols = Math.floor((tw2 - 96) / cell)
+      // rowCells() in the plugin: ring and gap, value, label, two between items
+      const need = mode => items.reduce((n, it) => {
+        const lab = mode === 'full' ? it.label : mode === 'short' ? it.short : ''
+        const lw = [...lab].reduce((k, ch) => k + (/[⺀-鿿]/.test(ch) ? 2 : 1), 0)
+        return n + 3 + Math.max(it.value.length, it.minW ? 5 : 0) + (lab ? 1 + lw : 0)
+      }, 2 * (items.length - 1) + 2)
+      const tmode = ['full', 'short'].find(m => need(m) <= cols) ?? 'none'
+      roundRect(ctx, tx, ty, tw2, TH, 18)
       ctx.fillStyle = '#0b0b0a'
       ctx.fill()
       ctx.strokeStyle = rgba(FG, 0.12)
       ctx.lineWidth = 1.5
       ctx.stroke()
-      // the input box, Claude Code style
-      roundRect(ctx, tx + 40, ty + 60, tw2 - 80, 92, 12)
-      ctx.strokeStyle = rgba(FG, 0.3)
-      ctx.lineWidth = 2
-      ctx.stroke()
-      text(ctx, '>', tx + 70, ty + 118, F.monoB(28), FG)
+      ctx.save()
+      roundRect(ctx, tx, ty, tw2, TH, 18)
+      ctx.clip()
+      const X0 = tx + 48
+      chevron(ctx, X0, ty + 70, 29, FAINT)
+      text(ctx, '把 token 统计拆成独立模块', X0 + cell * 2, ty + 70, tf, FAINT)
+      bullet(ctx, X0, ty + 118, 29, FG)
+      text(ctx, '拆分完成，测试全部通过。', X0 + cell * 2, ty + 118, tf, FG)
+      // the row, its pies in the ring colours
+      const ry = ty + 190
+      const reach = tw(t, 35.95, 36.45, E.lin)
+      let x = X0
+      items.forEach((it, i) => {
+        const lab = tmode === 'full' ? it.label : tmode === 'short' ? it.short : ''
+        const a = clamp(reach * 4 - i)
+        withAlpha(ctx, a, () => {
+          pie(ctx, x + cell * 0.5, ry - 10, 11, it.frac, it.color)
+          text(ctx, it.value, x + cell * 2, ry, tf, FG)
+          if (lab) text(ctx, lab, x + cell * (3 + Math.max(it.value.length, it.minW ? 5 : 0)), ry, tf, DIM)
+        })
+        x += cell * (3 + Math.max(it.value.length, it.minW ? 5 : 0) + (lab ? 1 + [...lab].reduce((k, ch) => k + (/[⺀-鿿]/.test(ch) ? 2 : 1), 0) : 0) + 2)
+      })
+      // the prompt between two rules, the engine's hint line under it
+      ctx.fillStyle = rgba(FG, 0.28)
+      ctx.fillRect(tx + 28, ty + 220, tw2 - 56, 2)
+      ctx.fillRect(tx + 28, ty + 296, tw2 - 56, 2)
+      chevron(ctx, X0, ty + 270, 29, FG)
       if (Math.floor(t * 2.2) % 2 === 0) {
         ctx.fillStyle = rgba(FG, 0.85)
-        ctx.fillRect(tx + 104, ty + 92, 15, 32)
+        ctx.fillRect(X0 + cell * 2, ty + 244, cell * 0.9, 34)
       }
-      // the hint row with the line as its dim tail
-      const hy = ty + 214
-      const tf = F.mono(27)
-      let x = tx + 70
-      const put = (s, color = DIM) => {
-        text(ctx, s, x, hy, tf, color)
-        x += measure(ctx, s, tf)
-      }
-      const reach = tw(t, 35.9, 36.9, E.lin)
-      put('? for shortcuts')
-      x += 60
-      const segs = items.map(it => ({ frac: it.frac, s: `${it.value} ${it.label.replace(' ', ' ')}` }))
-      const cw = measure(ctx, ' ', tf)
-      segs.forEach((g, i) => {
-        const a = clamp(reach * 5 - i)
-        if (a <= 0) return
-        withAlpha(ctx, a, () => {
-          pie(ctx, x + cw * 0.5, hy - 9, 10, g.frac, DIM)
-          x += cw * 2
-          put(g.s)
-        })
-        x += cw * 3
+      text(ctx, '? for shortcuts', X0, ty + 346, F.mono(25), FAINT)
+      ctx.restore()
+      // width gauge, in columns
+      const ga = tw(t, 36.45, 36.75)
+      withAlpha(ctx, ga, () => {
+        text(ctx, `${cols} cols`, tx + tw2, ty - 22, F.mono(20), DIM, { align: 'right' })
+        ctx.strokeStyle = rgba(FG, 0.25)
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.moveTo(tx, ty - 52)
+        ctx.lineTo(tx, ty - 40)
+        ctx.moveTo(tx, ty - 46)
+        ctx.lineTo(tx + tw2, ty - 46)
+        ctx.moveTo(tx + tw2, ty - 52)
+        ctx.lineTo(tx + tw2, ty - 40)
+        ctx.stroke()
       })
-      text(ctx, 'PromptHint · 终端', tx + tw2 - 40, ty + 296, F.mono(16), FAINT, { align: 'right' })
     })
   })
 }
@@ -1175,8 +1225,8 @@ function sceneInstall(ctx, t) {
   const e = tw(t, 37.95, 38.7, E.outExpo)
   const out = tw(t, 40.85, 41.35, E.inCubic)
   withAlpha(ctx, 1 - out, () => {
-    reveal(ctx, '两行命令，即刻装好。', 168, 236, F.black(64), FG, tw(t, 38.05, 38.9, E.lin), { dy: 30, spread: 4, blur: 10 })
-    reveal(ctx, 'Two commands, and it is there.', 168, 292, F.serif(40), DIM, tw(t, 38.3, 39.3, E.lin), { dy: 12, spread: 10, blur: 5 })
+    reveal(ctx, '两行命令，即刻装好。', 168, 232, F.bold(72), FG, tw(t, 38.05, 38.9, E.lin), { dy: 30, spread: 4, blur: 10 })
+    reveal(ctx, 'Two commands, and it is there.', 168, 300, F.serif(44), SUB, tw(t, 38.3, 39.3, E.lin), { dy: 12, spread: 10, blur: 5 })
     withAlpha(ctx, e, () => {
       const cx = 168
       const cy = 400 + (1 - e) * 80
