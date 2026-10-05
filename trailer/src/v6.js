@@ -92,7 +92,7 @@ export function open6() {
     const [, sy] = at(960, 640)
     const tx = lerp(lerp(rx, 0, pull), fx, push)
     const ty = lerp(lerp(lerp(ry, 0, pull), sy, settle), fy, push)
-    const dz = lerp(lerp(lerp(0.15, 0.125, prog(t, 0, HIT)), 1.0, pull) * lerp(1, 0.86, settle), 0.4, push)
+    const dz = lerp(lerp(lerp(0.15, 0.125, prog(t, 0, HIT)), 0.84, pull) * lerp(1, 0.98, settle), 0.4, push)
     shoot(s.camera, t, [tx, ty, D * dz], [tx, ty, 0], FOV, { drift: 0.01, roll: lerp(-9, 0, E.outCubic(prog(t, HIT, HIT + 1.6))) })
     back.draw(ctx => {
       const L = (1 - dock) * tw(t, 0.05, 0.6)
@@ -195,16 +195,21 @@ export function side() {
     L.material.opacity = R.material.opacity = a
     L.userData.draw(Math.round(t * 30), ctx => sidePanel(ctx, t, 'pop'))
     R.userData.draw(Math.round(t * 30), ctx => sidePanel(ctx, t, 'row'))
-    shoot(s.camera, t, [0, -0.2, D * lerp(1.04, 0.98, prog(t, S0, S0 + 4.35))], [0, -0.2, 0], FOV, { drift: 0.01 })
+    const cam = keys(t, [
+      [S0, [0, -0.2, 1.04]],
+      [S0 + 2.3, [0, -0.2, 0.96], E.inOutSine],
+      [S0 + 4.35, [at(1400, 0)[0], at(0, 790)[1], 0.6], E.inOutCubic],
+    ])
+    shoot(s.camera, t, [cam[0], cam[1], D * cam[2]], [cam[0], cam[1], 0], FOV, { drift: 0.01 })
     back.draw(ctx => {
       pool(ctx, 1410, 700, 520, BLUE, 0.16 * tw(t, S0 + 1.9, S0 + 2.6))
       return true
     })
     front.draw(ctx => {
-      line(ctx, 'Claude Code 用量面板', 510, 150, 34, t, { t0: S0 + 0.3, align: 'center', color: MUTE })
-      line(ctx, 'usage-line', 1410, 150, 38, t, { t0: S0 + 0.45, align: 'center', font: F.monoB })
-      line(ctx, '要点开才看得到，也没有缓存时间。', 510, 1012, 32, t, { t0: S0 + 1.75, align: 'center', color: MUTE })
-      line(ctx, '一直都在，缓存精确到秒。', 1410, 1012, 32, t, { t0: S0 + 2.05, align: 'center', color: INK })
+      line(ctx, 'Claude Code 用量面板', 510, 150, 40, t, { t0: S0 + 0.3, t1: S0 + 3.1, align: 'center', color: MUTE })
+      line(ctx, 'usage-line', 1410, 150, 44, t, { t0: S0 + 0.45, t1: S0 + 3.15, align: 'center', font: F.monoB })
+      line(ctx, '要点开才看得到，也没有缓存时间。', 510, 1012, 38, t, { t0: S0 + 1.75, t1: S0 + 3.1, align: 'center', color: MUTE })
+      line(ctx, '一直都在，缓存精确到秒。', 1410, 1012, 38, t, { t0: S0 + 2.05, t1: S0 + 3.2, align: 'center', color: INK })
     })
   }
   return s
@@ -251,7 +256,7 @@ export function buildShots() {
   }
   const extra = {
     open_cache: () => ({ center: [0.5, 0.5], tint: '#000000' }),
-    cache_limits: () => ({ center: [1310 / W, 1 - 540 / H], tint: '#000000' }),
+    cache_limits: () => ({ center: [1220 / W, 1 - 540 / H], tint: '#000000' }),
     limits_side: () => ({ dir: [1, 0] }),
   }
   const plan = t => {

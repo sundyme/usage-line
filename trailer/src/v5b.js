@@ -139,8 +139,12 @@ const BUB = { w: 330, h: 74 }
 export function cache() {
   const { s, bg, back, front } = stage()
   const PC = { x: 1150, y: 600 }
+  // three depths: the dial far back, the glowing ring between, the glass lens in front
+  const ZG = 1.0
+  const ZR = -2.4
+  const ZT = -4.6
   const glass = liquid({ w: 1800, h: 1200, k: 90, refr: 70, bevel: 64, frost: 0.28, tintA: 0.1, sat: 1.4, lift: 0.04, disp: 0.7 })
-  glass.position.set(...at(PC.x, PC.y), 0)
+  glass.position.set(...at(PC.x, PC.y), ZG)
   s.scene.add(glass)
   const lensFace = panel(LENS.d, LENS.d, { res: 2 })
   const bubFace = panel(BUB.w, BUB.h, { res: 2 })
@@ -149,9 +153,46 @@ export function cache() {
     f.renderOrder = 60
     s.scene.add(f)
   }
-  lensFace.position.set(...at(LENS.x, LENS.y), 0.01)
+  lensFace.position.set(...at(LENS.x, LENS.y), ZG + 0.01)
   bubFace.userData.draw(0, ctx => {
     text(ctx, '继续：再补一个边界测试', 30, 47, F.reg(26), INK)
+  })
+  const ringP = panel(1300, 1300, { res: 1.2 })
+  ringP.position.set(...at(LENS.x, LENS.y), ZR)
+  ringP.scale.setScalar((D - ZR) / D)
+  const dial = panel(1000, 1000, { res: 1.2 })
+  dial.position.set(...at(LENS.x, LENS.y), ZT)
+  dial.scale.setScalar((D - ZT) / D)
+  ringP.renderOrder = 2
+  dial.renderOrder = 1
+  // light adds: straight alpha, additive
+  for (const m of [ringP, dial]) {
+    m.material.map.premultiplyAlpha = false
+    m.material.blending = THREE.AdditiveBlending
+  }
+  s.scene.add(ringP, dial)
+  dial.userData.draw(0, ctx => {
+    const c = 500
+    for (let i = 0; i < 120; i++) {
+      const an = -Math.PI / 2 + (i / 120) * Math.PI * 2
+      const major = i % 10 === 0
+      const r0 = major ? 352 : 362
+      ctx.strokeStyle = `rgba(255,255,255,${major ? 0.32 : 0.11})`
+      ctx.lineWidth = major ? 2.5 : 1.6
+      ctx.beginPath()
+      ctx.moveTo(c + Math.cos(an) * r0, c + Math.sin(an) * r0)
+      ctx.lineTo(c + Math.cos(an) * 374, c + Math.sin(an) * 374)
+      ctx.stroke()
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(c, c, 430, 0, Math.PI * 2)
+    ctx.stroke()
+    ;['60', '45', '30', '15'].forEach((n, i) => {
+      const an = -Math.PI / 2 + (i / 4) * Math.PI * 2
+      text(ctx, n, c + Math.cos(an) * 400, c + Math.sin(an) * 400 + 8, F.mono(20), 'rgba(255,255,255,0.32)', { align: 'center' })
+    })
   })
   const bubble = (t, m) => {
     // a message flies in and is swallowed by the lens
@@ -170,8 +211,8 @@ export function cache() {
     const last = !expired && left < 60
     const col = expired ? RED : last ? AMBER : BLUE
     const inn = sp(t, 22.15, 0.8)
-    const pulse = MERGES.reduce((m, r) => m + (t >= r ? Math.exp(-(t - r) * 5) : 0), 0)
-    const d = LENS.d * inn * (1 + 0.035 * pulse)
+    const pulse = MERGES.reduce((m, r) => m + (t >= r ? Math.exp(-(t - r) * 4.5) * Math.cos((t - r) * 14) : 0), 0)
+    const d = LENS.d * inn * (1 + 0.05 * pulse)
     const shapes = [{ ...lp(LENS.x, LENS.y, PC.x, PC.y), w: d, h: d, r: d / 2 }]
     let bf = null
     for (const m of MERGES) bf = bf ?? bubble(t, m)
@@ -179,9 +220,9 @@ export function cache() {
     glass.userData.set(shapes)
     glass.userData.u.glow.value.set(expired ? '#2a0d0b' : '#000000')
     bubFace.material.opacity = bf ? clamp((0.92 - bf.q) / 0.3) * clamp(bf.sh * 3) : 0
-    if (bf) bubFace.position.set(...at(bf.x, bf.y), 0.01)
+    if (bf) bubFace.position.set(...at(bf.x, bf.y), ZG + 0.01)
     lensFace.material.opacity = clamp(inn * 2 - 0.6)
-    lensFace.scale.setScalar(Math.max(0.001, inn))
+    lensFace.scale.setScalar(Math.max(0.001, inn * (1 + 0.05 * pulse)))
     lensFace.userData.draw(`${Math.ceil(left)}${expired}${last}`, ctx => {
       const c = LENS.d / 2
       text(ctx, 'PROMPT CACHE', c, c - 88, F.mono(20), MUTE, { align: 'center', tracking: 4 })
@@ -189,36 +230,36 @@ export function cache() {
       text(ctx, str, c, c + 40, expired ? F.med(120) : F.monoB(118), expired ? '#ff8a7a' : last ? '#ffd28a' : INK, { align: 'center' })
       text(ctx, expired ? '下一句按全价' : last ? '最后一分钟' : '剩余', c, c + 104, F.reg(26), MUTE, { align: 'center' })
     })
-    const pos = keys(t, [
-      [22.0, [0.4, 0, D * 1.08]],
-      [30.35, [-0.2, 0, D * 0.96], E.inOutSine],
-    ])
-    shoot(s.camera, t, pos, [pos[0], 0, 0], FOV, { drift: 0.012, shake: pulse * 0.02 })
-    back.draw(ctx => {
-      // the ring the lens sits over: light for the glass to bend
-      const a = inn
-      pool(ctx, LENS.x, LENS.y, 520, col, 0.2 * a + 0.15 * pulse)
+    // the ring and its light, a layer behind the glass
+    const flare = Math.max(0, pulse)
+    const ia = sp(t, 22.05, 0.9)
+    ringP.material.opacity = clamp(ia * 1.5)
+    ringP.scale.setScalar(((D - ZR) / D) * lerp(0.82, 1, ia) * (1 + 0.025 * flare))
+    dial.material.opacity = clamp(sp(t, 22.25, 1.0) * 1.3)
+    dial.rotation.z = lerp(0.6, 0, E.outCubic(prog(t, 22.2, 23.4)))
+    ringP.userData.draw(`${Math.round(left * 4)}${col}${Math.round(flare * 30)}`, ctx => {
+      const c = 650
+      pool(ctx, c, c, 650, col, 0.2 + 0.2 * flare)
+      pool(ctx, c, c, 300, col, 0.1 + 0.12 * flare)
       ctx.save()
-      ctx.globalAlpha = a
       ctx.shadowColor = col
-      ctx.shadowBlur = 36
-      ring(ctx, LENS.x, LENS.y, 300, 24, left / 3600, col, { minArc: expired ? 0 : 0.012 })
+      ctx.shadowBlur = 40 + 30 * flare
+      ring(ctx, c, c, 300, 24, left / 3600, col, { minArc: expired ? 0 : 0.012 })
       ctx.restore()
-      for (let i = 0; i < 60; i++) {
-        const an = -Math.PI / 2 + (i / 60) * Math.PI * 2
-        const r0 = i % 5 === 0 ? 340 : 346
-        ctx.strokeStyle = `rgba(255,255,255,${(i % 5 === 0 ? 0.28 : 0.12) * a})`
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.moveTo(LENS.x + Math.cos(an) * r0, LENS.y + Math.sin(an) * r0)
-        ctx.lineTo(LENS.x + Math.cos(an) * 356, LENS.y + Math.sin(an) * 356)
-        ctx.stroke()
-      }
-      return true
     })
+    // the camera arcs across the stack, so the layers slide past one another; refills push in
+    const o = keys(t, [
+      [22.0, [-2.2, 0.8, 1.08]],
+      [25.6, [-0.3, -0.4, 0.98], E.inOutSine],
+      [28.0, [1.4, 0.4, 0.97], E.inOutSine],
+      [30.35, [2.3, 0.1, 0.92], E.inOutSine],
+    ])
+    const z = o[2] - 0.035 * flare
+    shoot(s.camera, t, [o[0], o[1], D * z], [o[0] * 0.65, o[1] * 0.65, 0], FOV, { drift: 0.012, shake: flare * 0.015 })
+    back.draw(() => false)
     front.draw(ctx => {
-      line(ctx, 'PROMPT CACHE · TTL 1h / 5m', 130, 330, 22, t, { t0: 22.25, font: F.mono, color: MUTE, tracking: 3 })
-      line(ctx, '缓存倒计时', 130, 440, 92, t, { t0: 22.3 })
+      line(ctx, 'PROMPT CACHE · TTL 1h / 5m', 130, 320, 22, t, { t0: 22.25, font: F.mono, color: MUTE, tracking: 3 })
+      line(ctx, '缓存倒计时', 130, 440, 96, t, { t0: 22.3 })
       const subs = [
         [22.6, 23.55, '命中缓存，重读只要一成价格。'],
         [23.7, 25.4, '离开一会儿？还剩 12 分钟。'],
@@ -227,7 +268,7 @@ export function cache() {
         [28.02, 29.0, '过期变红：下一句，全价重读。'],
         [29.2, 30.2, '看着倒计时，把缓存用足。'],
       ]
-      subs.forEach(([a, b, str]) => line(ctx, str, 132, 530, 38, t, { t0: a, t1: b, color: MUTE }))
+      subs.forEach(([a, b, str]) => line(ctx, str, 133, 540, 46, t, { t0: a, t1: b, color: INK }))
     })
   }
   return s

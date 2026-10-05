@@ -94,13 +94,13 @@ export function limits() {
     shoot(s.camera, t, pos, tgt, FOV, { drift: 0.02, shake: shot * 0.02 })
     back.draw(() => false)
     front.draw(ctx => {
-      head(ctx, t, '额度和上下文，', '同样一眼看清。', { t0: 30.25, t1: 35.0, x: 120, y: 170, size: 60, lag: 0.25 })
+      head(ctx, t, '额度和上下文，', '同样一眼看清。', { t0: 30.25, t1: 35.0, x: 120, y: 160, size: 68, lag: 0.25 })
       const subs = [
         [30.95, 32.15, '5 小时额度：70% 琥珀，90% 变红。'],
         [32.35, 33.6, '7 天额度：重置时间，一并显示。'],
         [33.75, 35.0, '上下文：何时 /clear，一看便知。'],
       ]
-      subs.forEach(([a, b, str]) => line(ctx, str, 122, 330, 32, t, { t0: a, t1: b, color: INK }))
+      subs.forEach(([a, b, str]) => line(ctx, str, 960, 1012, 40, t, { t0: a, t1: b, color: INK, align: 'center' }))
     })
   }
   return s
@@ -176,7 +176,7 @@ function terminal(ctx, w, h, t, items) {
 export function adapt() {
   const { s, bg, back, front } = stage()
   const win = panel(1400, AW.h, { res: 1.6 })
-  win.position.set(...at(960, 600), 0)
+  win.position.set(...at(960, 660), 0)
   s.scene.add(win)
   const term = panel(1100, 360, { res: 1.6 })
   s.scene.add(term)
@@ -186,19 +186,19 @@ export function adapt() {
     const w = keys(t, [[35.0, 1400], [36.05, 980, E.inOutQuint], [36.55, 980], [37.25, 660, E.inOutQuint]])
     const mode = w > 1150 ? 'full' : w > 800 ? 'short' : 'none'
     win.userData.draw(`${Math.round(w)}${mode}${items[0].value}${Math.floor(t * 2.2) % 2}`, ctx => compactWindow(ctx, w, t, items, mode))
-    win.position.set(...at(960 + (1400 - w) / 2, 600), 0)
+    win.position.set(...at(960 + (1400 - w) / 2, 660), 0)
     const tin = E.outQuint(prog(t, 37.2, 38.0))
     const away = E.inOutCubic(prog(t, 37.15, 37.9))
     win.position.x -= away * 5
     win.material.opacity = 1 - away
-    term.position.set(...at(lerp(1500, 1000, tin), 620), 0.2)
+    term.position.set(...at(lerp(1500, 1000, tin), 680), 0.2)
     term.material.opacity = tin
     term.userData.draw(`${items[0].value}${Math.floor(t * 2.2) % 2}`, ctx => terminal(ctx, 1100, 360, t, items))
     shoot(s.camera, t, [0.4, -0.5, D * lerp(0.8, 0.74, prog(t, 35, 38.35))], [0.4, -0.5, 0], FOV, { drift: 0.012 })
     back.draw(() => false)
     front.draw(ctx => {
-      head(ctx, t, '窗口再窄，', '也不拥挤。', { t0: 35.25, t1: 37.05, x: 120, y: 190, size: 64 })
-      head(ctx, t, '终端里，', '一样原生。', { t0: 37.3, t1: 38.25, x: 120, y: 190, size: 64 })
+      head(ctx, t, '窗口再窄，', '也不拥挤。', { t0: 35.25, t1: 37.05, x: 120, y: 150, size: 68 })
+      head(ctx, t, '终端里，', '一样原生。', { t0: 37.3, t1: 38.25, x: 120, y: 150, size: 68 })
     })
   }
   return s
@@ -236,12 +236,12 @@ export function install() {
       drawUsageRow(ctx, 22, 198 + (1 - rowIn) * 10, items, { size: 24, reveal: i => E.outCubic(prog(t, 40.3 + i * 0.08, 40.7 + i * 0.08)) })
       drawPrompt(ctx, 10, 240, t, { w: P.w, typed, caret: true, placeholder: '继续说点什么…' })
     })
-    shoot(s.camera, t, [0, 0, D * lerp(0.86, 0.8, prog(t, 38, 41))], [0, -0.3, 0], FOV, { drift: 0.012 })
+    shoot(s.camera, t, [0, -0.55, D * lerp(0.76, 0.7, prog(t, 38, 41))], [0, -0.55, 0], FOV, { drift: 0.012 })
     back.draw(ctx => {
       pool(ctx, 620, 795, 420, BLUE, 0.16 * rowIn * (1 - tw(t, 40.6, 41.0) * 0.5))
       return true
     })
-    front.draw(ctx => head(ctx, t, '两行命令，', '零配置。', { t0: 38.2, t1: 40.95, x: 960, y: 190, size: 64, align: 'center', lag: 0.9 }))
+    front.draw(ctx => head(ctx, t, '两行命令，', '零配置。', { t0: 38.2, t1: 40.95, x: 960, y: 170, size: 72, align: 'center', lag: 0.9 }))
   }
   return s
 }
