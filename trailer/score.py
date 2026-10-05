@@ -14,7 +14,7 @@ import wave
 import numpy as np
 
 SR = 48_000
-DUR = 35.0
+DUR = 39.0
 N = int(SR * DUR)
 BEAT = 0.5
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -403,43 +403,55 @@ click(18.84, 0.18, -0.4)
 bell(midi(76), 18.9, 0.05, 0.9, 2.0, 0.6, -0.4, verb=0.5)
 bell(midi(57), 19.72, 0.08, 1.6, 1.41, 2.4, -0.4, verb=0.6)  # no cache time here
 bell(midi(85), 20.05, 0.07, 1.6, 2.0, 0.8, 0.4, verb=0.7)    # always there
-# 22 · ADAPT · 25 · INSTALL
+# 22 · ADAPT — the window narrows twice, becomes a terminal; a message; the cache refills
 whoosh(21.9, 0.5, 6000, 1500, 0.14, 0.3)
-bars(22.0, 25.0, 'light', start=2)
-for at in (22.45, 23.5):
-    whoosh(at, 0.7, 1800, 500, 0.07, 0.5)
-    tick(at + 0.65, 0.05, 2400)
-whoosh(24.1, 0.8, 300, 4000, 0.14, 0.55)
-bars(25.0, 27.0, 'soft', start=0)
-typing(25.3, 43, 0.019, 0.055)
-click(26.25, 0.18)
-bell(midi(81), 26.3, 0.06, 1.0, 2.0, 0.5)
-typing(26.45, 26, 0.022, 0.055)
-click(27.05, 0.2)
-bell(midi(85), 27.1, 0.07, 1.0, 2.0, 0.5)
+bars(22.0, 26.0, 'light', start=2)
+for at in (22.9, 24.2):
+    whoosh(at, 0.8, 1800, 500, 0.07, 0.5)
+    tick(at + 0.8, 0.05, 2400)
+whoosh(25.15, 0.9, 300, 4000, 0.12, 0.55)
+bell(midi(81), 25.95, 0.05, 1.2, 2.0, 0.6, verb=0.7)
+bars(26.0, 29.0, 'soft', start=0)
+typing(25.95, 8, 0.085, 0.055)
+click(26.7, 0.2)
+for k in range(8):
+    tick(27.6 + 0.4 * (1 - (1 - k / 8) ** 1.8), 0.03 + 0.03 * k / 8, 1900 + 160 * k, 0.2)
+whoosh(27.38, 0.66, 300, 5000, 0.12, 0.85, pan=0.2)
+impact(28.0, 0.22, 1.2)
+for i, n in enumerate((78, 81, 85, 90)):
+    bell(midi(n), 28.0 + i * 0.05, 0.06, 1.5, 2.0, 0.8, 0.3 - 0.1 * i)
+tick(28.5, 0.06, 2600, 0.2)
+# 29 · INSTALL
+bars(29, 31, 'soft', start=0)
+typing(29.3, 43, 0.019, 0.055)
+click(30.25, 0.18)
+bell(midi(81), 30.3, 0.06, 1.0, 2.0, 0.5)
+typing(30.45, 26, 0.022, 0.055)
+click(31.05, 0.2)
+bell(midi(85), 31.1, 0.07, 1.0, 2.0, 0.5)
 for i in range(4):
-    bell(midi(73 + [0, 4, 7, 12][i]), 27.3 + 0.08 * i, 0.06, 1.2, 2.0, 0.8, -0.3 + 0.2 * i)
-supersaw(F_M, 27.0, 1.0, gain=0.04, cutoff=lambda t: 700 + 5000 * ((t - 27) / 1.0) ** 2.2, res=0.8, a=0.05, r=0.02, verb=0.5)
-riser(27.1, 0.9, 0.2, 200, 10000)
+    bell(midi(73 + [0, 4, 7, 12][i]), 31.3 + 0.08 * i, 0.06, 1.2, 2.0, 0.8, -0.3 + 0.2 * i)
+supersaw(F_M, 31, 1.0, gain=0.04, cutoff=lambda t: 700 + 5000 * ((t - 31) / 1.0) ** 2.2, res=0.8, a=0.05, r=0.02, verb=0.5)
+riser(31.1, 0.9, 0.2, 200, 10000)
 for k in range(12):
-    snare(27.3 + 0.7 * (1 - (1 - k / 12) ** 1.6), 0.04 + 0.1 * k / 12)
-reverse_cymbal(28.0, 1.0, 0.26)
-# 28 · DROP — everything, on glass
-bars(28.0, 31.3, 'hi', start=0)
-impact(28.0, 0.8, 2.8)
+    snare(31.3 + 0.7 * (1 - (1 - k / 12) ** 1.6), 0.04 + 0.1 * k / 12)
+reverse_cymbal(32, 1.0, 0.26)
+# 32 · DROP — everything, on glass
+bars(32, 35.3, 'hi', start=0)
+impact(32, 0.8, 2.8)
 for i, (n, pan) in enumerate(zip((73, 76, 80, 85, 88, 92, 97, 100), (-0.6, 0.6, -0.3, 0.3, -0.5, 0.5, 0, 0.2))):
-    bell(midi(n), 28.0 + i * 0.125, 0.05, 1.2, 2.0, 0.8, pan, verb=0.6)
-whoosh(31.0, 0.6, 600, 8000, 0.14, 0.7)
-# 31.3 · THE NAME
-supersaw(F_M + [66, 73], 31.3, 3.5, gain=0.05, cutoff=lambda t: 3000 - 2000 * min(1, (t - 31.3) / 3), a=0.02, r=0.3, verb=0.85)
-bass_note(42, 31.3, 3.0, 0.16)
-kick(31.3, 0.8)
-impact(31.3, 0.35, 2.0)
-bell(midi(78), 31.55, 0.09, 2.4, 1.0, 0.6, verb=0.85)
-bell(midi(85), 31.58, 0.05, 2.4, 1.0, 0.4, 0.3, verb=0.85)
-glass_pop(32.25, 1.2, 0.0)
-click(33.35, 0.2)
-bell(midi(90), 33.38, 0.07, 1.6, 2.0, 0.5, verb=0.8)
+    bell(midi(n), 32 + i * 0.125, 0.05, 1.2, 2.0, 0.8, pan, verb=0.6)
+whoosh(35, 0.6, 600, 8000, 0.14, 0.7)
+# 35.3 · THE NAME
+supersaw(F_M + [66, 73], 35.3, 3.5, gain=0.05, cutoff=lambda t: 3000 - 2000 * min(1, (t - 35.3) / 3), a=0.02, r=0.3, verb=0.85)
+bass_note(42, 35.3, 3.0, 0.16)
+kick(35.3, 0.8)
+impact(35.3, 0.35, 2.0)
+bell(midi(78), 35.55, 0.09, 2.4, 1.0, 0.6, verb=0.85)
+bell(midi(85), 35.58, 0.05, 2.4, 1.0, 0.4, 0.3, verb=0.85)
+glass_pop(36.25, 1.2, 0.0)
+click(37.35, 0.2)
+bell(midi(90), 37.38, 0.07, 1.6, 2.0, 0.5, verb=0.8)
 
 # sidechain: everything tonal breathes with the kick
 duck = np.ones(N)
@@ -468,7 +480,7 @@ mix = sum(bus[k] * LEVEL[k] for k in bus) + wet
 mix = highpass(mix, 30, 3)
 mix = np.tanh(mix * 1.3) / 1.3
 fade = np.ones(N)
-i0 = int(34.1 * SR)
+i0 = int(38.1 * SR)
 fade[i0:] = np.linspace(1, 0, N - i0) ** 1.4
 mix *= fade
 mix *= 0.95 / np.max(np.abs(mix))

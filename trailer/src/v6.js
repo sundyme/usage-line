@@ -4,10 +4,10 @@
 //   5.0  CACHE    the countdown: hit, away, refill, the last minute, expiry, refill
 //  13.0  LIMITS   5h · 7d · context on a table of glass
 //  18.0  SIDE     the native panel (click to see, no cache) beside usage-line (always there)
-//  22.0  ADAPT    narrow windows, the terminal
-//  25.0  INSTALL  two commands
-//  28.0  TABLE    the drop
-//  31.3  END      the name
+//  22.0  ADAPT    the window narrows, becomes a terminal; close in on the glyphs as the cache refills
+//  29.0  INSTALL  two commands
+//  32.0  TABLE    the drop
+//  35.3  END      the name
 import * as THREE from 'three'
 import { E, W, H, clamp, keys, lerp, prog, tw } from './engine.js'
 import { panel, shoot } from './kit.js'
@@ -17,9 +17,10 @@ import { liquid } from './liquid.js'
 import { CC, POP, drawPopover, drawPrompt, drawUsageRow } from './cc.js'
 import { D, FOV, INK, MUTE, UNIT, at, head, line, pointer, pool, sp, stage } from './stage.js'
 import { cache } from './v5b.js'
-import { adapt, end, install, limits, tableShot } from './v5c.js'
+import { end, install, limits, tableShot } from './v5c.js'
+import { adapt6 } from './v6b.js'
 
-export const DUR6 = 35
+export const DUR6 = 39
 const lp = (x, y) => ({ x: x - W / 2, y: H / 2 - y })
 const v3 = new THREE.Vector3()
 
@@ -227,10 +228,10 @@ export const SHOTS6 = {
   cache: [4.65, 13.35],
   limits: [13.0, 18.35],
   side: [18.0, 22.35],
-  adapt: [22.0, 25.3],
-  install: [25.0, 28.0],
-  table: [28.0, 31.65],
-  end: [31.3, 35.0],
+  adapt: [22.0, 29.3],
+  install: [29.0, 32.0],
+  table: [32.0, 35.65],
+  end: [35.3, 39.0],
 }
 // [from, to, start, end, kind] · 1 cross · 3 zoom-through · 7 blur-zoom · 8 push
 export const CUTS6 = [
@@ -238,10 +239,10 @@ export const CUTS6 = [
   ['cache', 'limits', 13.0, 13.35, 3],
   ['limits', 'side', 18.0, 18.35, 8],
   ['side', 'adapt', 22.0, 22.35, 7],
-  ['adapt', 'install', 25.0, 25.3, 1],
-  ['table', 'end', 31.3, 31.65, 7],
+  ['adapt', 'install', 29.0, 29.3, 1],
+  ['table', 'end', 35.3, 35.65, 7],
 ]
-export const DROPS6 = [1.0, 28.0]
+export const DROPS6 = [1.0, 32.0]
 
 export function buildShots() {
   const shots = {
@@ -249,10 +250,10 @@ export function buildShots() {
     cache: shifted(cache(), 17),
     limits: shifted(limits(), 17),
     side: side(),
-    adapt: shifted(adapt(), 13),
-    install: shifted(install(), 13),
-    table: shifted(tableShot(), 13),
-    end: shifted(end(), 13),
+    adapt: adapt6(),
+    install: shifted(install(), 9),
+    table: shifted(tableShot(), 9),
+    end: shifted(end(), 9),
   }
   const extra = {
     open_cache: () => ({ center: [0.5, 0.5], tint: '#000000' }),
@@ -274,5 +275,5 @@ export function buildShots() {
 export function drawHud() {}
 export function look(t) {
   const hit = DROPS6.reduce((m, d) => Math.max(m, t >= d ? Math.exp(-(t - d) * 7) : 0), 0)
-  return { ca: hit * 0.002, exposure: 1 + hit * 0.1, vignette: 0.22, roll: false, grain: 0.006, fade: tw(t, 0, 0.12) * (1 - tw(t, 34.2, 35, E.inOutSine)) }
+  return { ca: hit * 0.002, exposure: 1 + hit * 0.1, vignette: 0.22, roll: false, grain: 0.006, fade: tw(t, 0, 0.12) * (1 - tw(t, 38.2, 39, E.inOutSine)) }
 }
