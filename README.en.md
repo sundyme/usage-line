@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> · <a href="assets/usage-line-trailer.mp4">▶ Launch trailer (39 s)</a> · <a href="assets/usage-line.mp4">2D film (44 s)</a>
+  <a href="README.md">中文</a> · <a href="assets/usage-line-trailer.mp4">▶ Launch trailer (39 s)</a> · <a href="assets/usage-line.mp4">Film (44 s)</a>
 </p>
 
 ---
@@ -89,7 +89,7 @@ Try a change with `claude --plugin-dir plugins/usage-line`.
 
 The 39-second 3D trailer lives in [`trailer/`](trailer/). Each shot is a [three.js](https://threejs.org) scene rendered on the GPU in headless Chrome. Claude Code's own interface is drawn flat, the way the app draws it. The film's motion elements use a hand-written liquid-glass shader: it frosts what sits behind and bends it only in a narrow lip at the rim, where it also splits into colour. It adds a hairline highlight. Shapes melt into one another, so a message bubble can flow into the cache lens. The type is a screen-locked layer redrawn every sub-frame, so it gets the same real motion blur as the 3D. A compositing shader handles the transitions: iris, zoom-through, push, mosaic, glitch, blur-zoom and flash. Each frame then goes through bloom, an 8-sub-frame motion-blur accumulation and a light grade. The storyboard and copy are in [`trailer/STORYBOARD.md`](trailer/STORYBOARD.md). Raw pixels stream over a WebSocket into ffmpeg from four pages in parallel. [`trailer/score.py`](trailer/score.py) synthesises a 120 BPM electronic score with numpy alone, and every cut and UI event gets a sound on its own frame.
 
-The 44-second 2D film is in [`film/`](film/). No editor, no templates, no footage. [`film/render.mjs`](film/render.mjs) draws all 2,640 frames with Skia, averaging six sub-frames across a 180° shutter for real motion blur, and pipes raw pixels into ffmpeg. [`film/score.py`](film/score.py) synthesises the score and every sound effect with numpy alone, each UI sound on the frame of its event.
+The 44-second film follows the brief in [`film/BRIEF.md`](film/BRIEF.md) and renders on the trailer's three.js engine ([`trailer/src/film2.js`](trailer/src/film2.js) and `f2*.js`). Every piece of UI is a plane shot by a perspective camera, so the camera moves and the parallax are real. The transitions happen in camera: ring into ring, a window that flips over into the terminal, an iris that opens from a check mark. The first, flat version is still in [`film/render.mjs`](film/render.mjs), drawn with Skia. [`film/score.py`](film/score.py) synthesises the score and every sound effect with numpy alone, each UI sound on the frame of its event.
 
 ## License
 

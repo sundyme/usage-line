@@ -99,7 +99,7 @@ async function stills(times) {
 }
 
 async function film() {
-  const { DUR } = await import('./src/timeline.js')
+  const DUR = Number(process.env.DUR) || (await import('./src/timeline.js')).DUR
   const total = Math.round(DUR * FPS)
   const jobs = Number(process.env.JOBS || 4)
   const { server, wss, port } = await serve()
@@ -135,8 +135,8 @@ async function film() {
   await browser.close()
   server.close()
   fs.writeFileSync(path.join(OUT, 'chunks.txt'), files.map(f => `file '${f}'`).join('\n'))
-  const audio = path.join(OUT, 'score.wav')
-  const final = path.join(OUT, 'usage-line-trailer.mp4')
+  const audio = process.env.AUDIO || path.join(OUT, 'score.wav')
+  const final = path.join(OUT, `${process.env.NAME || 'usage-line-trailer'}.mp4`)
   const enc = ffmpeg([
     '-f', 'concat', '-safe', '0', '-i', path.join(OUT, 'chunks.txt'),
     ...(fs.existsSync(audio) ? ['-i', audio] : []),

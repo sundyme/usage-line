@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="assets/usage-line-trailer.mp4"><img src="assets/trailer-poster.png" alt="▶ 观看发布预告片（39 秒）" width="88%"></a><br>
-  <sub>▶ 点击观看 39 秒 3D 发布预告片（<a href="trailer/">trailer/</a>） · 另有 44 秒的 <a href="assets/usage-line.mp4">2D 版影片</a>（<a href="film/">film/</a>） · 每一帧与每一个音符都由代码生成</sub>
+  <sub>▶ 点击观看 39 秒 3D 发布预告片（<a href="trailer/">trailer/</a>） · 另有 44 秒的 <a href="assets/usage-line.mp4">透视版影片</a>（<a href="film/BRIEF.md">简报</a>） · 每一帧与每一个音符都由代码生成</sub>
 </p>
 
 ---
@@ -94,7 +94,7 @@ plugins/usage-line/               插件本体
   types/index.d.ts                $.state 的类型契约
   tests/usage-line.test.ts        18 个测试
 trailer/                          3D 发布预告片的源码（three.js）
-film/                             2D 发布影片与 banner 的源码
+film/                             影片的简报、配乐与 banner 源码（v1 的 2D 渲染器也在这里）
 assets/                           banner、海报、影片
 ```
 
@@ -110,7 +110,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/usage-line
 
 ## 发布影片是怎么做的
 
-没有剪辑软件，没有模板和素材：[`film/render.mjs`](film/render.mjs) 用 Skia（[@napi-rs/canvas](https://github.com/Brooooooklyn/canvas)）逐帧绘制全部 2640 帧，每帧由 6 个子帧在 180° 快门内平均出真实的运动模糊，原始像素直接送进 ffmpeg；[`film/score.py`](film/score.py) 只用 numpy 合成配乐与音效（加法合成的 pad、FM 钟声、正弦底鼓、噪声扫频和卷积混响），每一个 UI 音效都对齐画面里的那一帧。
+没有剪辑软件，没有模板和素材。44 秒的影片按 [`film/BRIEF.md`](film/BRIEF.md) 的分镜，在预告片同一套 three.js 引擎里渲染（[`trailer/src/film2.js`](trailer/src/film2.js) 及 `f2*.js`）。每块界面都是透视相机拍摄的 3D 平面，因此有真实的运镜与视差；转场都在镜头内完成：圆环接圆环、窗口翻面成终端、从对勾处展开光圈。v1 的 2D 版本仍在 [`film/render.mjs`](film/render.mjs)（Skia 逐帧绘制）。[`film/score.py`](film/score.py) 只用 numpy 合成配乐与音效（加法合成的 pad、FM 钟声、正弦底鼓、噪声扫频和卷积混响），每一个 UI 音效都对齐画面里的那一帧。
 
 ```bash
 cd film && npm install && python3 score.py && node render.mjs
