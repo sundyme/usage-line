@@ -96,5 +96,5 @@ export function drawHud(ctx, t, frame) {
 }
 
 export function look(t) {
-  return { ca: 0.0015, exposure: 1, vignette: 0.3, roll: true, grain: 0.008, fade: tw(t, 0, 0.1) * (1 - tw(t, 43.3, 44, E.inOutSine)) }
+  return { ca: 0.0015, exposure: 1.12, vignette: 0.2, roll: true, grain: 0.008, fade: tw(t, 0, 0.1) * (1 - tw(t, 43.3, 44, E.inOutSine)) }
 }

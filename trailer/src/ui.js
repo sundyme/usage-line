@@ -147,12 +147,12 @@ export function text(ctx, str, x, y, font, color, { align = 'left', alpha = 1, b
 
 // Glyph-by-glyph entrance: each rises, sharpens and fades in, staggered.
 export function reveal(ctx, str, x, y, font, color, p, o = {}) {
-  const { align = 'left', dy = 36, spread = 5, blur = 10, alpha = 1, ease = E.outCubic } = o
+  const { align = 'left', dy = 36, spread = 5, blur = 10, alpha = 1, ease = E.outCubic, tracking = 0 } = o
   if (p <= 0 || alpha <= 0.001) return
-  if (p >= 1) return text(ctx, str, x, y, font, color, { align, alpha })
+  if (p >= 1) return text(ctx, str, x, y, font, color, { align, alpha, tracking })
   ctx.font = font
   const chars = [...str]
-  const widths = chars.map(c => ctx.measureText(c).width)
+  const widths = chars.map(c => ctx.measureText(c).width + tracking)
   const total = widths.reduce((a, b) => a + b, 0)
   let cx = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x
   const n = chars.length

@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { E, W, H, clamp, keys, lerp, prog, tw } from './engine.js'
 import { toPx } from './kit.js'
 import { BLUE, DIM, F, FAINT, FG, SURFACE, SURFACE2, TAU, check, drawRow, glowSpot, measure, pie, reveal, rgba, rowItems, text, typed } from './ui.js'
-import { at, orbit, panel, rr, world } from './f2kit.js'
+import { at, orbit, panel, rr, snap, world } from './f2kit.js'
 import { LOCK, SUB, lockup } from './f2a.js'
 
 // ❯ and ⏺, which no font here carries
@@ -191,7 +191,7 @@ export function adapt() {
   s.userData = { check: [0.15, 0.4] }
   s.update = t => {
     bg.userData.tick(t)
-    const items = rowItems({ cacheLeft: 3540 - (t - 32.5) })
+    const items = rowItems({ cacheLeft: 3540 - (snap(t) - 32.5) })
     const flip = E.inOutCubic(prog(t, 35.1, 35.85))
     A.position.set(...at(960, 650), 1.4 * Math.sin(Math.PI * flip))
     A.rotation.set(0.1 * Math.sin(Math.PI * flip), Math.PI * flip, 0)
@@ -216,14 +216,14 @@ export function adapt() {
     const lp = v3.set(((checkAt[0] - TW / 2) / 100) * -1, (TH / 2 - checkAt[1]) / 100 - 0.3, 0).applyMatrix4(A.matrixWorld).toArray()
     const [cx, cy] = toPx(s.camera, lp)
     s.userData.check = [cx / W, 1 - cy / H]
-    grid.material.opacity = 0.1
+    grid.material.opacity = 0.07
     front.draw(ctx => {
       const head = (zh, en, a, b, t1) => {
         if (t < a || t > t1 + 0.4) return
         ctx.save()
         ctx.globalAlpha *= 1 - tw(t, t1, t1 + 0.35, E.inCubic)
         reveal(ctx, zh, 168, 232, F.bold(72), FG, tw(t, a, a + 0.85, E.lin), { dy: 30, spread: 4, blur: 10 })
-        reveal(ctx, en, 168, 300, F.serif(44), SUB, tw(t, b, b + 1.0, E.lin), { dy: 12, spread: 10, blur: 5 })
+        reveal(ctx, en, 168, 300, F.light(34), SUB, tw(t, b, b + 1.0, E.lin), { dy: 12, spread: 10, blur: 5, tracking: 0.8 })
         ctx.restore()
       }
       head('窗口再窄，也不挤压。', 'Narrow window? It folds, it never squeezes.', 32.6, 32.85, 34.95)
@@ -250,11 +250,11 @@ export function end() {
       const y = 280
       glowSpot(ctx, 960, y, 700, BLUE, 0.1 * fin)
       lockup(ctx, 960, y + (1 - fin) * 30, lerp(1.08, 1.2, fin), { ringP: close, word: tw(t, 41.3, 41.95, E.lin), caret: false, glow: 26 * close, alpha: fin })
-      reveal(ctx, '一行，全看清。', 960, y + 180, F.light(48), FG, tw(t, 41.7, 42.4, E.lin), { align: 'center', dy: 14, spread: 4, blur: 6 })
+      reveal(ctx, '一行，全看清。', 960, y + 180, F.light(48), FG, tw(t, 41.7, 42.4, E.lin), { align: 'center', dy: 14, spread: 4, blur: 6, tracking: 0.8 })
       text(ctx, 'github.com/sundyme/usage-line', 960, y + 248, F.mono(28), DIM, { align: 'center', alpha: tw(t, 42.0, 42.6) })
     })
     orbit(s.camera, t, at(960, 520), { dist: keys(t, [[41.15, 0.78], [42.8, 1.0, E.outQuint], [44, 1.03, E.lin]]), yaw: keys(t, [[41.15, 0.1], [42.8, 0, E.outQuint]]), pitch: 0.02 })
-    grid.material.opacity = 0.1 * (1 - tw(t, 43.2, 44))
+    grid.material.opacity = 0.07 * (1 - tw(t, 43.2, 44))
     front.draw(() => false)
   }
   return s

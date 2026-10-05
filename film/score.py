@@ -256,7 +256,7 @@ for i in range(10):
 # 03 the window, the rings, the request
 whoosh(9.75, d=1.0, f0=200, f1=1800, gain=0.16, swell=0.5)
 for i in range(4):
-    pluck(midi([74, 78, 81, 86][i]), 10.95 + i * 0.09, gain=0.07, pan=-0.3 + 0.2 * i, bus=sfx)
+    pluck(midi([74, 78, 81, 86][i]), 11.31 + i * 0.2, gain=0.08, pan=-0.3 + 0.2 * i, bus=sfx)  # each piece lands
 for i in range(7):
     click(11.55 + i * 0.093, gain=0.12)
 click(12.35, gain=0.22)

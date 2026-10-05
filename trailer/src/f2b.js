@@ -3,7 +3,7 @@
 import * as THREE from 'three'
 import { E, clamp, keys, lerp, prog, tw } from './engine.js'
 import { AMBER, BLUE, DIM, F, FG, RED, TAU, clockText, glowSpot, measure, mix, reveal, rgba, ring, ringColor, span, text } from './ui.js'
-import { D, at, orbit, panel, rr, world } from './f2kit.js'
+import { D, STUDIO, at, orbit, panel, rr, snap, world } from './f2kit.js'
 import { SUB, ripple } from './f2a.js'
 
 // ═══ 04 · the cache ═════════════════════════════════════════════════════════════════════════
@@ -56,6 +56,31 @@ function drawDial(ctx, t, c, { frac, expired, color }) {
   text(ctx, '缓存', c, c + 18, F.med(52), FG, { align: 'center', alpha: 0.9 })
   text(ctx, 'PROMPT CACHE', c, c + 64, F.mono(18), DIM, { align: 'center' })
 }
+// mm:ss in a monospace face; while the clock runs at real speed, a digit that changes slides
+// up out of a window as the next slides in, like a counter's wheel
+function rollClock(ctx, t, left, x, y, font, color) {
+  const live = (t >= 16.6 && t < 18.0) || t >= 22.5
+  const cur = clockText(left)
+  const shown = Math.ceil(left)
+  const p = live ? clamp((shown - left) / 0.24) : 1
+  if (p >= 1) return text(ctx, cur, x, y, font, color)
+  const prev = clockText(shown + 1)
+  const cw = measure(ctx, '0', font)
+  const size = 262
+  const e = E.outCubic(p)
+  ctx.save()
+  ctx.beginPath()
+  // the window is exactly one digit tall and the wheel travels a full digit, so the two never overlap
+  ctx.rect(x - 20, y - size * 0.8, cw * 5 + 40, size * 0.86)
+  ctx.clip()
+  ;[...cur].forEach((ch, i) => {
+    const cx = x + i * cw
+    if (ch === prev[i]) return text(ctx, ch, cx, y, font, color)
+    text(ctx, prev[i], cx, y - size * 0.88 * e, font, color, { alpha: 1 - 0.5 * e })
+    text(ctx, ch, cx, y + size * 0.88 * (1 - e), font, color, { alpha: 0.5 + 0.5 * e })
+  })
+  ctx.restore()
+}
 function drawColumn(ctx, t, { left, expired, amber }) {
   const X = 1010
   reveal(ctx, '剩余时间  ·  TIME LEFT', X, 318, F.mono(20), DIM, tw(t, 16.2, 16.9, E.lin), { dy: 10, blur: 4 })
@@ -78,17 +103,16 @@ function drawColumn(ctx, t, { left, expired, amber }) {
     ctx.restore()
   }
   const na = tw(t, 16.15, 16.75, E.outExpo)
-  const value = expired ? '过期' : clockText(left)
   const ncol = expired ? RED : amber ? AMBER : FG
   const shake = expired ? Math.sin((t - 21.2) * 70) * 10 * Math.exp(-(t - 21.2) * 7) : 0
   ctx.save()
   ctx.globalAlpha *= na
   ctx.translate(X + shake, 560 + (1 - na) * 40)
-  if (expired) text(ctx, value, 0, 0, F.bold(236), ncol)
-  else text(ctx, value, -8, 0, F.monoB(262), ncol)
+  if (expired) text(ctx, '过期', 0, 0, F.bold(236), ncol)
+  else rollClock(ctx, t, left, -8, 0, F.monoB(262), ncol)
   ctx.restore()
   reveal(ctx, '缓存倒计时，精确到秒。', X, 702, F.bold(68), FG, tw(t, 16.6, 17.45, E.lin), { dy: 30, spread: 4, blur: 10 })
-  reveal(ctx, 'Know the moment your prompt cache goes cold.', X, 758, F.serif(40), SUB, tw(t, 16.9, 17.9, E.lin), { dy: 12, spread: 10, blur: 5 })
+  reveal(ctx, 'Know the moment your prompt cache goes cold.', X, 758, F.light(31), SUB, tw(t, 16.9, 17.9, E.lin), { dy: 12, spread: 10, blur: 5, tracking: 0.8 })
   const FACTS = [['1h', '订阅缓存时长'], ['5m', '超额用量，自动识别'], ['子代理', '不打断计时']]
   let fx = X
   FACTS.forEach(([k, v], i) => {
@@ -125,8 +149,9 @@ export function cache() {
   }
   s.update = t => {
     const st = cacheState(t)
-    const tint = mix('#0b1220', st.expired ? '#2a0d0c' : st.amber ? '#2a1c08' : '#0b1220', st.expired || st.amber ? 1 : 0)
-    bg.userData.set([{ c: tint, x: 0.33, y: 0.5, r: 0.5, a: 1 }, { c: '#100e0b', x: 0.85, y: 0.9, r: 0.5, a: 1 }])
+    const shownSt = cacheState(snap(t))
+    const tint = st.expired ? '#3a1210' : st.amber ? '#3a2609' : '#10203f'
+    bg.userData.set([STUDIO[0], { c: tint, x: 0.3, y: 0.45, r: 0.55, a: 1 }, STUDIO[2]])
     bg.userData.tick(t)
     put(ticks, C.x, C.y, ZT)
     ticks.rotation.z = -0.5 * (1 - tw(t, 15.85, 17.0, E.outExpo))
@@ -135,9 +160,9 @@ export function cache() {
     const k = `${Math.round(st.frac * 900)}${st.color}${Math.round(t * 30)}`
     ticks.userData.draw(`${Math.round(st.frac * 120)}${st.color}`, ctx => drawTicks(ctx, t, 500, st))
     dial.userData.draw(k, ctx => drawDial(ctx, t, DIAL / 2, st))
-    col.userData.draw(`${clockText(st.left)}${Math.round(t * 30)}`, ctx => {
+    col.userData.draw(`${shownSt.left.toFixed(3)}${Math.round(t * 30)}`, ctx => {
       ctx.translate(-COL.x, -COL.y)
-      drawColumn(ctx, t, st)
+      drawColumn(ctx, snap(t), shownSt)
     })
     // the camera goes slowly round the dial; each event leans in a little
     const lean = [20.0, 21.2, 21.95].reduce((m, e) => m + (t >= e ? 0.03 * Math.exp(-(t - e) * 4) : 0), 0)
@@ -149,7 +174,7 @@ export function cache() {
       dist: keys(t, [[15.85, 0.8], [17.2, 1.07, E.outCubic], [24.3, 1.02, E.inOutSine]]) - lean,
       shake,
     })
-    grid.material.opacity = 0.1
+    grid.material.opacity = 0.07
     front.draw(() => false)
   }
   return s
@@ -251,8 +276,8 @@ export function meters() {
     const toCtx = tw(t, 29.4, 30.7, E.inOutCubic)
     G.rotation.set(lerp(-0.2, -0.06, toCtx), lerp(0.24, 0.05, toCtx), 0)
     G.updateMatrixWorld(true)
-    const five = keys(t, FIVE)
-    const seven = keys(t, SEVEN)
+    const five = keys(snap(t), FIVE)
+    const seven = keys(snap(t), SEVEN)
     const fiveReset = keys(t, [[24.3, 174], [28.2, 118, E.inOutSine]])
     const sevenReset = keys(t, [[24.3, 6060], [28.2, 5952, E.inOutSine]])
     ra.userData.draw(`${five.toFixed(1)}${Math.round(t * 30)}`, ctx => drawMeter(ctx, M / 2, { v: five, name: '5 小时额度', reset: span(fiveReset), at: 24.15, cross: [crossAmber5, crossRed5] }, t))
@@ -270,19 +295,19 @@ export function meters() {
       [32.9, [CTX.x, CTX.y + 60, 0.8, 0.02], E.inOutSine],
     ])
     orbit(s.camera, t, wpos(path[0], path[1]), { dist: path[2], yaw: path[3], pitch: 0.04 })
-    grid.material.opacity = 0.1
+    grid.material.opacity = 0.07
     front.draw(ctx => {
       const a1 = 1 - tw(t, 29.3, 29.8, E.inCubic)
       if (a1 > 0) {
         ctx.save()
         ctx.globalAlpha *= a1
         reveal(ctx, '额度用了多少，何时重置。', 168, 232, F.bold(72), FG, tw(t, 24.05, 24.95, E.lin), { dy: 30, spread: 4, blur: 10 })
-        reveal(ctx, "How much you've used, and when it resets.", 168, 300, F.serif(44), SUB, tw(t, 24.35, 25.35, E.lin), { dy: 12, spread: 10, blur: 5 })
+        reveal(ctx, "How much you've used, and when it resets.", 168, 300, F.light(34), SUB, tw(t, 24.35, 25.35, E.lin), { dy: 12, spread: 10, blur: 5, tracking: 0.8 })
         ctx.restore()
       }
       if (t > 30.2) {
         reveal(ctx, '上下文占用，一直在眼前。', 960, 880, F.bold(68), FG, tw(t, 30.3, 31.1, E.lin), { align: 'center', dy: 26, spread: 4, blur: 8 })
-        reveal(ctx, 'Context fill, always in sight.  /clear and compaction re-read it.', 960, 944, F.serif(40), SUB, tw(t, 30.6, 31.7, E.lin), { align: 'center', dy: 10, spread: 10, blur: 5 })
+        reveal(ctx, 'Context fill, always in sight.  /clear and compaction re-read it.', 960, 944, F.light(31), SUB, tw(t, 30.6, 31.7, E.lin), { align: 'center', dy: 10, spread: 10, blur: 5, tracking: 0.8 })
       }
     })
   }

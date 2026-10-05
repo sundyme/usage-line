@@ -3,31 +3,39 @@
 // soft contact shadows, and an orbiting camera.
 import * as THREE from 'three'
 import { H, W, makeShot } from './engine.js'
-import { UNIT, dist, ground, panel, shoot, typeLayer } from './kit.js'
+import { UNIT, dist, glow, ground, panel, shoot, typeLayer } from './kit.js'
 import { canvasTexture, FG } from './ui.js'
 
 export const FOV = 30
 export const D = dist(FOV)
 // screen px on the z = 0 plane → world units (also used for a group's local px)
+// numbers change once per frame, never mid-shutter: a smeared figure reads as two
+export const snap = t => Math.round(t * 60) / 60
+
 export const at = (px, py) => [(px - W / 2) / UNIT, (H / 2 - py) / UNIT]
 
-export const WARM = { base: '#0f0e0d', blobs: [{ c: '#0b1220', x: 0.5, y: 0.5, r: 0.55, a: 1 }, { c: '#100e0b', x: 0.15, y: 0.95, r: 0.5, a: 1 }] }
+export const STUDIO = [
+  { c: '#2b303b', x: 0.5, y: 1.02, r: 0.66, a: 1 },
+  { c: '#10203f', x: 0.14, y: 0.16, r: 0.5, a: 1 },
+  { c: '#221c15', x: 0.9, y: 0.2, r: 0.46, a: 0.9 },
+]
+export const BASE = '#121318'
 
 function dots() {
   const ct = canvasTexture(64, 64)
   ct.draw(0, ctx => {
     ctx.fillStyle = FG
     ctx.beginPath()
-    ctx.arc(32, 32, 2.6, 0, Math.PI * 2)
+    ctx.arc(32, 32, 2.2, 0, Math.PI * 2)
     ctx.fill()
   })
   ct.tex.wrapS = ct.tex.wrapT = THREE.RepeatWrapping
   const Wd = 96
   const Hd = 60
-  ct.tex.repeat.set(Wd / 0.74, Hd / 0.74)
+  ct.tex.repeat.set(Wd / 0.62, Hd / 0.62)
   const m = new THREE.Mesh(
     new THREE.PlaneGeometry(Wd, Hd),
-    new THREE.MeshBasicMaterial({ map: ct.tex, transparent: true, opacity: 0.11, depthWrite: false, depthTest: false, toneMapped: false }),
+    new THREE.MeshBasicMaterial({ map: ct.tex, transparent: true, opacity: 0.07, depthWrite: false, depthTest: false, toneMapped: false }),
   )
   m.position.z = -10
   m.renderOrder = -900
@@ -36,11 +44,14 @@ function dots() {
 
 export function world() {
   const s = makeShot()
-  const bg = ground(s.scene, { warp: 0.03, ...WARM })
+  const bg = ground(s.scene, { warp: 0.03, base: BASE, blobs: STUDIO })
   const grid = dots()
-  s.scene.add(grid)
+  const aura = glow(36, '#5b7fd6', 0.09)
+  aura.position.set(0, 2, -7)
+  aura.renderOrder = -950
+  s.scene.add(aura, grid)
   const front = typeLayer(s.scene)
-  return { s, bg, grid, front }
+  return { s, bg, grid, front, aura }
 }
 
 // A camera on a sphere around its target: yaw and pitch in radians, distance in units of D.
